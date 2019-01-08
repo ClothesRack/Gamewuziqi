@@ -142,7 +142,9 @@ public class ComputerGame extends JFrame {
 							JOptionPane.showMessageDialog(parFrame, "不要发送空消息~~");
 							return;
 						}
-						
+						if(sendtext.getText().contains("快点")) {
+							GameRoomUtil.palyothermusic("source/flowerdie.mp3");
+						}
 						
 						if(sendtext.getText().contains("停止")) {
 							GameRoomUtil.stopmusic();
