@@ -215,7 +215,7 @@ class MyPlane extends JPanel implements MouseListener{
 				}
 				ComputerGame computerGame= new ComputerGame(beginWindow, username.trim());
 				beginWindow.setVisible(false);
-				JOptionPane.showMessageDialog(computerGame, "目前人机下子随机，不是侮辱人的智商啊，还没有时间研究智能下子算法，还请多多包涵");
+				
 				repaint();
 			}
 			

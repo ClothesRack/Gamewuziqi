@@ -1072,7 +1072,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 				//上半部分
 				if(ks) {
 					//确保不越界 
-					if(ry-1>=0&&rx+l<=14) {
+					if(rx+l<=14&&ry-l>=0) {
 						if(allChess[rx+l][ry-l]==MyChessColorINT) {
 							num++;
 							if (num==4) {
@@ -1136,7 +1136,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 						}
 					}	
 				}else {
-					if(ry+l<=14) {
+					if(rx+l<=14) {
 						if(allChess[rx+l][ry]==MyChessColorINT) {
 							num++;
 							if (num==4) {

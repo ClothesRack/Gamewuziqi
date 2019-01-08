@@ -133,7 +133,7 @@ public class ComputerGame extends JFrame {
 				chatPlane.add(sendtext);
 				jt.setForeground(Color.green);
 				jt.append("系统："+gamepanel.dateFormat.format(new Date())+"\n"+"   欢迎加入游戏厅，希望来到这里能给你带来快乐，与室友一起组队开黑吧~~\n");	
-				
+				jt.append("系统："+gamepanel.dateFormat.format(new Date())+"\n"+"   目前人机下子随机，不是侮辱人的智商啊，还没有时间研究智能下子算法，还请多多包涵~~\n");	
 				send.addActionListener(new ActionListener() {
 					
 					@Override
@@ -316,19 +316,25 @@ class xiaqiThread extends Thread{
 				gmplane.isme = false;
 				
 				
-			
+				//System.err.println("我的颜色："+gmplane.MyChessColor);
 				System.out.println(gmplane.rx+"..."+gmplane.ry);		
 				//判断是否赢了比赛
-				boolean iswin = gmplane.checkwin();
+				boolean iswin = gmplane.checkwin(gmplane.MyChessColorINT);
 				if(iswin) {
 					System.out.println("你赢了啊！！！");
-					JOptionPane.showMessageDialog(gmplane, "你赢得了比赛！！");
+					JOptionPane.showMessageDialog(null, "你赢得了比赛！！");
 					gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   你赢得了比赛！！\n");
 					gmplane.MyplayGamewinnum++;
 					gmplane.GameWinAfter(gmplane);
 					GameRoomUtil.palyothermusic("source/winmusic.mp3");
 				}else {
 					ComputerXiaqi(gmplane);
+				}
+				if(gmplane.chessPoint.size()==255) {
+					gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   本局平手！！\n");
+					gmplane.MyplayGamewinnum++;
+					gmplane.ComputerGamewinnum++;
+					gmplane.GameWinAfter(gmplane);
 				}
 				gmplane.repaint();
 				
@@ -344,8 +350,13 @@ class xiaqiThread extends Thread{
 		//找到下棋子的点
 		prevent(gamePlane);
 		// 目前随机下点 没时间完善
-		gmplane.rx = new Random().nextInt(14);
-		gmplane.ry = new Random().nextInt(14);
+		//找到没有棋子的点
+		gmplane.rx = new Random().nextInt(15);
+		gmplane.ry = new Random().nextInt(15);
+		while (allChess[gmplane.rx][gmplane.ry]!=0) {
+			gmplane.rx = new Random().nextInt(15);
+			gmplane.ry = new Random().nextInt(15);
+		}
 		//如果当前位置没有棋子
 		if(allChess[gmplane.rx][gmplane.ry]==0) {
 			if(gmplane.ComputerChessColor.equals("white")) {
@@ -353,7 +364,8 @@ class xiaqiThread extends Thread{
 			}else {
 				gmplane.allChess[gmplane.rx][gmplane.ry] =2;
 			}
-			boolean status = gmplane.checkwin();
+			boolean status = gmplane.checkwin(gmplane.ComputerChessColorINT);
+			//System.err.println("电脑颜色："+gmplane.ComputerChessColor);
 			gmplane.chessPoint.add(gmplane.ComputerChessColor+","+(gmplane.rx*45+430)+","+(gmplane.ry*45+110));
 			gamePlane.isme = true;
 			gamePlane.repaint();
@@ -554,7 +566,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 		
 
 //画头像下的棋子颜色
-		if(ComputerChessColor.equals("white")) {
+		if(MyChessColor.equals("white")) {
 			g2.drawImage(Room.chessWhite.getImage(), 150,260,60,60,this);
 			if(!gameplayer2.equals(""))
 			g2.drawImage(Room.chessBlack.getImage(), 150,750,60,60,this);
@@ -644,10 +656,20 @@ class GamePlane extends JSplitPane implements MouseListener{
 				JOptionPane.showMessageDialog(this, "棋盘还没有棋子，不要乱点啊，再点我生气了");
 				return;
 			}
+			//如果棋盘最新棋子不是我的颜色 那么删除两个棋子
 			if(allChess[rx][ry]!=MyChessColorINT) {
+				int x = (Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[1])-430)/45;
+				int y = (Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[2])-110)/45;
+				int x2 = (Integer.parseInt(chessPoint.get(chessPoint.size()-2).split(",")[1])-430)/45;
+				int y2 = (Integer.parseInt(chessPoint.get(chessPoint.size()-2).split(",")[2])-110)/45;
+				allChess[x][y] = 0;
+				allChess[x2][y2] = 0;
 				chessPoint.remove(chessPoint.size()-1);
 				chessPoint.remove(chessPoint.size()-1);
 			}else {
+				int x = (Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[1])-430)/45;
+				int y = (Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[2])-110)/45;
+				allChess[x][y] = 0;
 				chessPoint.remove(chessPoint.size()-1);
 			}
 		
@@ -749,7 +771,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 	
 	}
 	
-	public boolean checkwin() {
+	public boolean checkwin(int whoColorINT) {
 		int num = 0,l=1;
 		boolean ks = true;
 		//   \这种情况
@@ -759,7 +781,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 				if(ks) {
 					//确保不越界 
 					if(rx-l>=0&&ry-l>=0) {
-						if(allChess[rx-l][ry-l]==MyChessColorINT) {
+						if(allChess[rx-l][ry-l]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
@@ -780,7 +802,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 					}
 				}else {
 					if(rx+l<=14&&ry+l<=14) {
-						if(allChess[rx+l][ry+l]==MyChessColorINT) {
+						if(allChess[rx+l][ry+l]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
@@ -800,7 +822,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 			if(ks) {
 				//确保不越界 
 				if(ry-l>=0) {
-					if(allChess[rx][ry-l]==MyChessColorINT) {
+					if(allChess[rx][ry-l]==whoColorINT) {
 						num++;
 						if (num==4) {
 							return true;
@@ -819,7 +841,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 				}	
 			}else {
 				if(ry+l<=14) {
-					if(allChess[rx][ry+l]==MyChessColorINT) {
+					if(allChess[rx][ry+l]==whoColorINT) {
 						num++;
 						if (num==4) {
 							return true;
@@ -837,8 +859,8 @@ class GamePlane extends JSplitPane implements MouseListener{
 				//上半部分
 				if(ks) {
 					//确保不越界 
-					if(ry-1>=0&&rx+l<=14) {
-						if(allChess[rx+l][ry-l]==MyChessColorINT) {
+					if(ry-l>=0&&rx+l<=14) {
+						if(allChess[rx+l][ry-l]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
@@ -859,7 +881,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 					}	
 				}else {
 					if(rx-l>=0&&ry+l<=14) {
-						if(allChess[rx-l][ry+l]==MyChessColorINT) {
+						if(allChess[rx-l][ry+l]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
@@ -883,7 +905,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 				if(ks) {
 					//确保不越界 
 					if(rx-l>=0) {
-						if(allChess[rx-l][ry]==MyChessColorINT) {
+						if(allChess[rx-l][ry]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
@@ -901,8 +923,8 @@ class GamePlane extends JSplitPane implements MouseListener{
 						}
 					}	
 				}else {
-					if(ry+l<=14) {
-						if(allChess[rx+l][ry]==MyChessColorINT) {
+					if(rx+l<=14) {
+						if(allChess[rx+l][ry]==whoColorINT) {
 							num++;
 							if (num==4) {
 								return true;
