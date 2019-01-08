@@ -41,10 +41,10 @@ public class PaintMoveChess extends Thread{
 			}
 			if(gamePlane.musicing) {
 				
-				g2.drawImage(GamePlane.beginBG.getImage(), 1200, 30,50,50, gamePlane);
+				g2.drawImage(GamePlane.StopBG.getImage(), 1200, 30,50,50, gamePlane);
 			}else {
 				
-				g2.drawImage(GamePlane.StopBG.getImage(), 1200, 30,50,50, gamePlane);
+				g2.drawImage(GamePlane.beginBG.getImage(), 1200, 30,50,50, gamePlane);
 			}
 			g.drawImage(bf,0,0,gamePlane);
 			

@@ -39,12 +39,12 @@ public class Room extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static ImageIcon man = new ImageIcon("source/man.jpg");
-	public static ImageIcon women = new ImageIcon("source/women.jpg");
+	static ImageIcon man = new ImageIcon("source/man.jpg");
+	static ImageIcon women = new ImageIcon("source/women.jpg");
 	public static ImageIcon chessWhite = new ImageIcon("source/chessWhite.png");
 	public static ImageIcon chessBlack = new ImageIcon("source/chessBlack.png");
 	
-	static String MSG;
+	public static String MSG;
 	public JPanel roomPlane;
 	public BeginWindow priwid;
 
@@ -202,6 +202,7 @@ class MouseThing extends MouseAdapter{
 			}
 			roomPlane.repaint();
 			roomPlane.hide = true;
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 		}
 		
 		
@@ -310,9 +311,9 @@ class RoomPlane extends JPanel{
 				g2.drawImage(Room.man.getImage(), 100, Y, Room.man.getImageObserver());
 				g2.setColor(Color.red);
 				g2.drawString(play1, 100, Y+60);
-				g2.drawImage(Room.chessWhite.getImage(), 250, Y+20, Room.chessWhite.getImageObserver());
+				g2.drawImage(Room.chessWhite.getImage(), 250, Y+20, 40,40,this);
 				if(!play2.equals("null")) {
-					g2.drawImage(Room.women.getImage(), 400, Y, Room.women.getImageObserver());
+					g2.drawImage(Room.women.getImage(), 400, Y, 40,40,this);
 					g2.drawString(play2, 400, Y+60);
 					hasplayer.add("1");
 				}else {

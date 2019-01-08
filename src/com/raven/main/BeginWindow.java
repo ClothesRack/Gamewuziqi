@@ -27,6 +27,9 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+
+import com.raven.client.ComputerGame;
+
 import util.GameRoomUtil;
 
 public class BeginWindow extends JFrame{
@@ -203,6 +206,10 @@ class MyPlane extends JPanel implements MouseListener{
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			System.out.println("人机窗口！！");
 			//隐藏该窗口 创建人机窗口
+			
+			String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~").trim();
+			new ComputerGame(beginWindow, username);
+			beginWindow.setVisible(false);
 			repaint();
 		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=360&&p.getY()<=420&&modelint==0) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
@@ -216,7 +223,7 @@ class MyPlane extends JPanel implements MouseListener{
 		}else if (p.getX()>=150&&p.getX()<=400&&p.getY()>=500-30&&p.getY()<=550-30&&(modelint==1||modelint==2)) {
 			modelint=0;
 			
-			
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			repaint();
 		}
 		//System.out.println("点击一次");

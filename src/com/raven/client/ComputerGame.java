@@ -1,4 +1,4 @@
-package com.raven.main;
+package com.raven.client;
 
 
 
@@ -36,10 +36,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import com.raven.main.BeginWindow;
+
+import com.raven.main.PaintMoveChess;
+import com.raven.main.Room;
+
 import util.GameRoomUtil;
 
 
-public class ChessBoard extends JFrame {
+public class ComputerGame extends JFrame {
 	/**
 	 * 
 	 */
@@ -48,16 +54,15 @@ public class ChessBoard extends JFrame {
 	int ChessBoardWidth = 1800;
 	int ChessBoardHeight  =  1000;
 	
-	String RoomType;
-	Room parFrame;
+	BeginWindow parFrame;
 	GamePlane gamepanel;
 	JSplitPane chatPlane;
 	JTextArea jt  = new JTextArea();
 	JScrollPane jscroll ;
-	public ChessBoard() {
+	public ComputerGame() {
 		
 	}
-	public ChessBoard(Room parFrame,String RoomType,String username) {
+	public ComputerGame(BeginWindow parFrame,String username) {
 				setLayout(null);
 				
 				//设置标题
@@ -71,7 +76,7 @@ public class ChessBoard extends JFrame {
 				addWindowListener(new WindowEvent(this));
 							
 				this.parFrame = parFrame;
-				this.RoomType = RoomType;
+				
 				//播放背景音乐
 				GameRoomUtil.playBgmusic();
 				
@@ -135,31 +140,24 @@ public class ChessBoard extends JFrame {
 							JOptionPane.showMessageDialog(parFrame, "不要发送空消息~~");
 							return;
 						}
-						try {
-							BeginWindow.out.write("MSGTYPE:GAMECHAT#"+sendtext.getText()+"\r\n");
-							BeginWindow.out.flush();
-							if(sendtext.getText().contains("快点")) {
-								GameRoomUtil.palyothermusic("source/flowerdie.mp3");
-							}
-							if(sendtext.getText().contains("停止")) {
-								GameRoomUtil.stopmusic();
-								gamepanel.musicing = false;
-							}
-							if(sendtext.getText().contains("开始")) {
-								GameRoomUtil.playBgmusic();
-								gamepanel.musicing = true;
-							}
-							
-							jt.append(gamepanel.gameplayer1+"："+gamepanel.dateFormat.format(new Date())+"\n"+"   "+sendtext.getText()+"\n");
-							sendtext.setText("");
-							//最下方
-							jt.setCaretPosition(jt.getDocument().getLength());
-							//获取焦点
-							sendtext.grabFocus();
-						} catch (IOException e1) {
-							
-							e1.printStackTrace();
+						
+						
+						if(sendtext.getText().contains("停止")) {
+							GameRoomUtil.stopmusic();
+							gamepanel.musicing = false;
 						}
+						if(sendtext.getText().contains("开始")) {
+							GameRoomUtil.playBgmusic();
+							gamepanel.musicing = true;
+						}
+						
+						jt.append(gamepanel.gameplayer1+"："+gamepanel.dateFormat.format(new Date())+"\n"+"   "+sendtext.getText()+"\n");
+						sendtext.setText("");
+						//最下方
+						jt.setCaretPosition(jt.getDocument().getLength());
+						//获取焦点
+						sendtext.grabFocus();
+					
 						
 					}
 				});
@@ -192,11 +190,11 @@ public class ChessBoard extends JFrame {
 	
 }
 class WindowEvent implements WindowListener{
-	ChessBoard chessBoard;
+	ComputerGame chessBoard;
 	public WindowEvent(){
 		
 	}
-	public WindowEvent(ChessBoard chessBoard) {
+	public WindowEvent(ComputerGame chessBoard) {
 		this.chessBoard = chessBoard;
 	}
 
@@ -215,45 +213,19 @@ class WindowEvent implements WindowListener{
 
 	@Override
 	public void windowClosing(java.awt.event.WindowEvent e) {
-		System.out.println("退出");
-		try {
+	
 			if(chessBoard.gamepanel.kaishi) {
 				
 				int i = JOptionPane.showConfirmDialog(chessBoard, "当前游戏已经开始，退出游戏你将输掉比赛，确认退出游戏？","确认退出？",2);
-				if(i==0) {
-					BeginWindow.out.write("MSGTYPE:BreakGame\r\n");
-					BeginWindow.out.flush();
-					
-					Room.MSG = GameRoomUtil.GetGames(chessBoard.parFrame);
-				}else {
+				if(i!=0) {
 					return;
 				}
+				
 			}
 			
-			if(chessBoard.RoomType.equals("CreateRoom")||chessBoard.RoomType.equals("ADDRoom")) {
-				String msg = "";
-				if(chessBoard.gamepanel.gameplayer2.equals("")) {
-					msg  = "MSGTYPE:LingoutGameNowPerson#0\r\n";
-				}else {
-					msg  = "MSGTYPE:LingoutGameNowPerson#1\r\n";
-				}
-				BeginWindow.out.write(msg);
-				BeginWindow.out.flush();
-				
-				
-				
-				chessBoard.dispose();
-				GameRoomUtil.stopmusic();//停止播放音乐
-				chessBoard.parFrame.setVisible(true);
-			}
-		} catch (IOException e1) {
-		
-		
-		}
-			
-		
-		
-		
+			chessBoard.dispose();
+			GameRoomUtil.stopmusic();//停止播放音乐
+			chessBoard.parFrame.setVisible(true);
 		
 	}
 
@@ -280,198 +252,7 @@ class WindowEvent implements WindowListener{
 		
 	}
 }
-class getServerMsg extends Thread{
-	GamePlane gmPlane;
-	
-	public getServerMsg() {
-		
-	}
-	public getServerMsg(GamePlane chessBord){
-		this.gmPlane = chessBord;
-	}
-	@Override
-	public void run() {
-		while (true) {
-			try {
-					
-				
-				String qtext = BeginWindow.in.readLine();
-				System.out.println(qtext);
-			
-				if(qtext==null) {
-					return;
-				}
-				String[] msgsplit = qtext.split("#");
-				// 关闭此窗口一定要break此循环 ，要不然这个sb线程会读取了父窗口的刷新消息卡顿了。。找个半个小时。
-				if(msgsplit[0].equals("MSGTYPE:STOPREAD!")) {
-					
-					break;
-					// 
-					//通知创建房间的玩家xx加入游戏
-				}else if(msgsplit[0].equals("MSGTYPE:ADDYourRoom")) {
-					BeginWindow.out.write("MSGTYPE:NoticeGameState#"+msgsplit[1].split(",")[1]+"\r\n");
-					BeginWindow.out.flush();
-					
-					gmPlane.gameplayer2 = msgsplit[1].split(",")[1];
-					gmPlane.chessBoard.jt.append("系统："+gmPlane.dateFormat.format(new Date())+"\r\n"+"   "+gmPlane.gameplayer2+"加入了您的房间\n");
-					//通知加入玩家 加入了谁的房间 获取 他的名字
-				}else if (msgsplit[0].equals("MSGTYPE:ADDSucc")) {
-					gmPlane.gameplayer2 = msgsplit[1].split(",")[0];
-					gmPlane.chessBoard.jt.append("系统："+gmPlane.dateFormat.format(new Date())+"\r\n"+"   你加入了"+gmPlane.gameplayer2+"的房间\n");
-				}else if(msgsplit[0].equals("MSGTYPE:ChessGameing")) {
-					String cxy[] = msgsplit[1].split(",");
-					if(cxy.length==3) {//长度未3的话，说明是下棋的信息
-						gmPlane.rx = Integer.parseInt(cxy[1]);
-						gmPlane.ry = Integer.parseInt(cxy[2]);
-						int x = gmPlane.rx*45+430;
-						int y = gmPlane.ry *45+110;
-						gmPlane.chessPoint.add(cxy[0]+","+x+","+y);
-						//设置我的状态为可用
-						gmPlane.isme = true;
-						if(cxy[0].equals("white")) {
-							gmPlane.allChess[Integer.parseInt(cxy[1])][Integer.parseInt(cxy[2])] =1;
-						}
-						else if(cxy[0].equals("black")){
-							
-							gmPlane.allChess[Integer.parseInt(cxy[1])][Integer.parseInt(cxy[2])] =2;
-						}//长度是1的话说明 和棋和认输 和悔棋 
-					}else if (cxy.length==1) {//如果是认输或者和棋
-						if(cxy[0].equals("HeWON")||cxy[0].equals("YouWIN")||cxy[0].equals("heqi")) {
-							if(cxy[0].equals("HeWON")) {
-								JOptionPane.showMessageDialog(gmPlane, "你输了！！！！");
-								gmPlane.chessBoard.jt.append("系统："+gmPlane.dateFormat.format(new Date())+"\r\n   你输了！！！！\n");
-								gmPlane.HisplayGamewinnum++;
-							}else if(cxy[0].equals("YouWIN")){
-								JOptionPane.showMessageDialog(gmPlane, "对方认输了，你很棒哦");
-								gmPlane.MyplayGamewinnum++;
-							}else if (cxy[0].equals("heqi")) {
-								int i =JOptionPane.showConfirmDialog(gmPlane, "对方请求和棋，你同意吗？","对方请求和棋",2);
-								if(i==0) {
-									BeginWindow.out.write("MSGTYPE:ChessGameing#heqi,0\r\n");
-									BeginWindow.out.flush();
-									gmPlane.HisplayGamewinnum++;
-									gmPlane.MyplayGamewinnum++;
-								}else {
-									BeginWindow.out.write("MSGTYPE:ChessGameing#heqi,1\r\n");
-									BeginWindow.out.flush();
-									return;
-								}
-								
-							} 
-							//游戏完成所做的事
-							gmPlane.GameWinAfter(gmPlane);
-						}else if (cxy[0].equals("huiqi")) {//如果是悔棋
-							
-							int i =JOptionPane.showConfirmDialog(gmPlane, "对方想要悔棋，你同意吗？","对方请求悔棋",2);
-							if(i==0) {
-								BeginWindow.out.write("MSGTYPE:ChessGameing#huiqi,0\r\n");
-								BeginWindow.out.flush();
-								//同意之后禁用自己的状态
-								gmPlane.isme =false;
-								gmPlane.allChess[gmPlane.rx][gmPlane.ry] =0;
-								gmPlane.chessPoint.remove(gmPlane.chessPoint.size()-1);
-							
-							}else {
-								BeginWindow.out.write("MSGTYPE:ChessGameing#huiqi,1\r\n");
-								BeginWindow.out.flush();
-								
-							}
-							
-						}
-					}else if (cxy.length==2) {
-						if(cxy[0].equals("huiqi")) {
-							if(cxy[1].equals("0")) {
-								System.out.println("同意悔棋");
-								gmPlane.allChess[gmPlane.rx][gmPlane.ry] =0;
-								gmPlane.chessPoint.remove(gmPlane.chessPoint.size()-1);
-								gmPlane.isme = true;
-							}else {
-								JOptionPane.showMessageDialog(gmPlane, "对方不同意悔棋");
-							}
-						}else if (cxy[0].equals("heqi")) {
-							if(cxy[1].equals("0")) {
-								System.out.println("同意和棋");
-								gmPlane.HisplayGamewinnum++;
-								gmPlane.MyplayGamewinnum++;
-								//游戏完成所做的事
-								gmPlane.GameWinAfter(gmPlane);	
-	
-							}else {
-								JOptionPane.showMessageDialog(gmPlane, "对方不同意和棋");
-							}
-						}
-							
-						
-					}
 
-					
-				}else if(msgsplit[0].equals("MSGTYPE:youareblackoriswhite")) {
-					BeginWindow.out.write("MSGTYPE:MyColor#"+gmPlane.MyChessColor+"\r\n");
-					BeginWindow.out.flush();
-				}else if(msgsplit[0].equals("SendHisColor")) {
-					System.out.println("房主的棋子颜色："+msgsplit[1]);
-						//设置我的颜色与防止的相反
-						if(msgsplit[1].equals("white")) {
-							gmPlane.MyChessColor = "black";
-							gmPlane.MyChessColorINT = 2;
-							
-							
-							System.out.println("设置我的颜色为black");
-						}else {
-							gmPlane.MyChessColor = "white";
-							gmPlane.MyChessColorINT = 1;
-							
-							System.out.println("设置我的颜色为white");
-						}
-				}else if(msgsplit[0].equals("MSGTYPE:GamePlayerLingout")){
-					if(gmPlane.chessBoard.RoomType.equals("CreateRoom")) {
-						//JOptionPane.showMessageDialog(gmPlane, "加入者下线");
-						
-						
-					}else {
-						//JOptionPane.showMessageDialog(gmPlane, gmPlane.gameplayer2+"离开了房间");
-						
-						gmPlane.chessBoard.RoomType="CreateRoom";
-					}
-					gmPlane.chessBoard.jt.append("系统："+gmPlane.dateFormat.format(new Date())+"\n   "+gmPlane.gameplayer2+"离开了房间\n");
-					gmPlane.gameplayer2 ="";
-					
-				}else if (msgsplit[0].equals("MSGTYPE:GAMEBEGIN")) {
-					System.out.println("游戏开始");
-					gmPlane.kaishi = true;
-					GameRoomUtil.palyothermusic("source/begin.mp3");
-					
-				}else if (msgsplit[0].equals("MSGTYPE:GAMEREADY")) {
-					if(msgsplit[1].equals("0")) {
-						gmPlane.zhunbei = false;
-					}else {
-						gmPlane.zhunbei = true;
-					}
-				}else if(msgsplit[0].equals("MSGTYPE:GAMECHAT")){
-					if(msgsplit[1].contains("快点")) {
-						GameRoomUtil.palyothermusic("source/flowerdie.mp3");
-					}
-					GameRoomUtil.palyothermusic("source/chating.mp3");
-					gmPlane.chessBoard.jt.append(gmPlane.gameplayer2+"："+gmPlane.dateFormat.format(new Date())+"\n   "+msgsplit[1]+"\n");
-					//设置总在最下方
-					gmPlane.chessBoard.jt.setCaretPosition(gmPlane.chessBoard.jt.getDocument().getLength());
-					
-				}else if(msgsplit[0].equals("MSGTYPE:BreakGame")) {
-					JOptionPane.showMessageDialog(gmPlane, "对方退出了房间，你赢的了这场比赛！");
-					gmPlane.MyplayGamewinnum++;
-					gmPlane.GameWinAfter(gmPlane);
-					GameRoomUtil.palyothermusic("source/winmusic.mp3");
-				}
-				gmPlane.repaint();
-			} catch (IOException e) {
-				
-				e.printStackTrace();
-			}
-		}
-		System.out.println("sb线程退出");
-	}
-	
-}
 
 class xiaqiThread extends Thread{
 	GamePlane gmplane;
@@ -521,7 +302,7 @@ class xiaqiThread extends Thread{
 					return;
 				}
 				// 白1黑2
-				if(gmplane.MyChessColor.equals("white")) {
+				if(gmplane.ComputerChessColor.equals("white")) {
 					gmplane.allChess[gmplane.rx][gmplane.ry] =1;
 				}else {
 					gmplane.allChess[gmplane.rx][gmplane.ry] =2;
@@ -531,33 +312,66 @@ class xiaqiThread extends Thread{
 				gmplane.isme = false;
 				
 				
-				try {
-					System.out.println(gmplane.rx+"..."+gmplane.ry);
-					BeginWindow.out.write(("MSGTYPE:ChessGameing#"+gmplane.MyChessColor+","+gmplane.rx+","+gmplane.ry+"\r\n"));
-					BeginWindow.out.flush();
-					//判断是否赢了比赛
-					boolean iswin = gmplane.checkwin();
-					if(iswin) {
-						System.out.println("你赢了啊！！！");
-						BeginWindow.out.write(("MSGTYPE:ChessGameing#GameWIN"+"\r\n"));
-						BeginWindow.out.flush();
-						JOptionPane.showMessageDialog(gmplane, "你赢得了比赛！！");
-						gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   你赢得了比赛！！\n");
-						gmplane.MyplayGamewinnum++;
-						gmplane.GameWinAfter(gmplane);
-						GameRoomUtil.palyothermusic("source/winmusic.mp3");
-					}
-					gmplane.repaint();
-				} catch (IOException e1) {
-					
-					e1.printStackTrace();
+			
+				System.out.println(gmplane.rx+"..."+gmplane.ry);		
+				//判断是否赢了比赛
+				boolean iswin = gmplane.checkwin();
+				if(iswin) {
+					System.out.println("你赢了啊！！！");
+					JOptionPane.showMessageDialog(gmplane, "你赢得了比赛！！");
+					gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   你赢得了比赛！！\n");
+					gmplane.MyplayGamewinnum++;
+					gmplane.GameWinAfter(gmplane);
+					GameRoomUtil.palyothermusic("source/winmusic.mp3");
+				}else {
+					ComputerXiaqi(gmplane);
 				}
+				gmplane.repaint();
 				
 			}
 			
 			
 				
 		}
+	}
+	public void ComputerXiaqi(GamePlane gamePlane) {
+		int [][]allChess = gamePlane.allChess;
+		List<String> chessPoint = gamePlane.chessPoint;
+		//找到下棋子的点
+		prevent(gamePlane);
+		
+		//如果当前位置没有棋子
+		if(allChess[gmplane.rx][gmplane.ry]==0) {
+			if(gmplane.ComputerChessColor.equals("white")) {
+				gmplane.allChess[gmplane.rx][gmplane.ry] =1;
+			}else {
+				gmplane.allChess[gmplane.rx][gmplane.ry] =2;
+			}
+			boolean status = gmplane.checkwin();
+			gmplane.chessPoint.add(gmplane.ComputerChessColor+","+(gmplane.rx*45+430)+","+(gmplane.ry*45+110));
+			gamePlane.isme = true;
+			gamePlane.repaint();
+			if(status) {
+				JOptionPane.showMessageDialog(gmplane, "电脑获得了胜利！");
+				gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   电脑赢得了比赛！！\n");
+				gmplane.ComputerGamewinnum++;
+				gmplane.GameWinAfter(gmplane);
+			}
+		}
+		
+	}
+
+	private void prevent(GamePlane gamePlane) {
+		int allChess[][] = gamePlane.allChess;
+		int myColorINT = gamePlane.MyChessColorINT;
+		for (int i = 0; i < allChess.length; i++) {
+			for (int j = 0; j < allChess[i].length; j++) {
+				if(allChess[i][j]==gamePlane.MyChessColorINT) {
+			
+				}
+			}
+		}
+		
 	}
 }
 class GamePlane extends JSplitPane implements MouseListener{
@@ -581,7 +395,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 	
 	int GameWidth = 1300;
 	int GameHeight = 1000;
-	ChessBoard chessBoard;
+	ComputerGame chessBoard;
 	Boolean MouseAtChess =false;
 	Boolean mousedown = false;
 	boolean musicing = true;
@@ -599,29 +413,30 @@ class GamePlane extends JSplitPane implements MouseListener{
 	//判断是自己下棋
 	boolean isme = true;
 	DecimalFormat df = new DecimalFormat("0.00");
-	String gameplayer2 ="";
+	String gameplayer2 ="风萧萧兮易水寒";
 	
-	ImageIcon man = new ImageIcon("source/man.jpg");
-	ImageIcon women = new ImageIcon("source/women.jpg");
+	
 	
 	String MyChessColor ="black";
-	/*String MyChessColor ="black";*/
+	String ComputerChessColor ="witer";
 	//白1黑2
 	int MyChessColorINT =2;
+	int ComputerChessColorINT = 1;
 	BufferedImage Colorstaus;
 	//胜率
 	double MYWINLV = 0;
-	double HisWINLV = 0;
+	double CopputerWINLV = 0;
 	
 	SimpleDateFormat dateFormat= new SimpleDateFormat("hh:mm:ss");
 	int MyplayGamewinnum = 0;
-	int HisplayGamewinnum = 0;
+	int ComputerGamewinnum = 0;
 	// 总场数
 	int PlayGamenum = 0;
-	boolean zhunbei = false;
+	
 	boolean kaishi = false;
-
-	public GamePlane(ChessBoard chessBoard,String gameplayer1) {
+	ImageIcon man = new ImageIcon("source/man.jpg");
+	ImageIcon women = new ImageIcon("source/women.jpg");
+	public GamePlane(ComputerGame chessBoard,String gameplayer1) {
 		setLayout(null);
 		
 		this.gameplayer1 = gameplayer1;
@@ -630,7 +445,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 		//setOpaque(false); 
 		//不要忘记添加 这个事件
 		addMouseListener(this);	
-		new getServerMsg(this).start();
+	
 		try {
 			
 			qizi = ImageIO.read(new File("source/qizi.png"));
@@ -710,77 +525,79 @@ class GamePlane extends JSplitPane implements MouseListener{
 		g2.drawString("和棋", 910, 820);
 		GameRoomUtil.writeString(mouseMove, mousedown, "和棋", g2, 910, 820, 180, 60);
 		g2.drawImage(man.getImage(), 130,10,150,150,man.getImageObserver());
-		g2.drawString(gameplayer1, 150,200);
+		g2.drawString(gameplayer1, 130,200);
 		g2.drawString("胜率"+String.format("%.2f", MYWINLV*100)+"%", 130,240);
-		if(gameplayer2!="") {
-			g2.drawImage(women.getImage(), 130,470,150,150,women.getImageObserver());
-			g2.drawString(gameplayer2, 150,660);
-			g2.drawString("胜率"+String.format("%.2f", HisWINLV*100)+"%", 130,700);
-		}
-		if(chessBoard.RoomType.equals("CreateRoom")) {
-			if(kaishi) {
-				g2.drawString("正在游戏中", 650, 80);
-				GameRoomUtil.writeString(mouseMove, mousedown, "正在游戏中", g2, 650, 80, 180, 60);
-			}else {
-				g2.drawString("开始游戏", 650, 80);
-				GameRoomUtil.writeString(mouseMove, mousedown, "开始游戏", g2, 650, 80, 180, 60);
-			}
-			g2.setColor(Color.red);
-			if(!gameplayer2.equals("")) {
-				if(zhunbei) {
-					g2.drawString("准备", 140,740);
-				}else {
-					g2.drawString("未准备", 140,740);
-				}
-			}
-			
+		
+		g2.drawImage(women.getImage(), 130,470,150,150,women.getImageObserver());
+		g2.drawString(gameplayer2, 130,660);
+		g2.drawString("胜率"+String.format("%.2f", CopputerWINLV*100)+"%", 130,700);
+		
+		
+		if(kaishi) {
+			g2.drawString("正在游戏中", 650, 80);
+			GameRoomUtil.writeString(mouseMove, mousedown, "正在游戏中", g2, 650, 80, 180, 60);
 		}else {
-			if(kaishi) {//如果游戏开始了 那么就 显示正在游戏
-				g2.drawString("正在游戏中", 650, 80);
-				GameRoomUtil.writeString(mouseMove, mousedown, "正在游戏中", g2, 650, 80, 180, 60);
-			}else {//否则的话就是准备与取消
-				if(zhunbei) {
-					g2.drawString("取消准备", 650, 80);
-					GameRoomUtil.writeString(mouseMove, mousedown, "取消准备", g2, 650, 80, 180, 60);
-				}else {
-					g2.drawString("点击准备", 650, 80);
-					GameRoomUtil.writeString(mouseMove, mousedown, "点击准备", g2, 650, 80, 180, 60);
-				}
-			}
+			g2.drawString("开始游戏", 650, 80);
+			GameRoomUtil.writeString(mouseMove, mousedown, "开始游戏", g2, 650, 80, 180, 60);
+		}
+		g2.setColor(Color.red);
 			
 			
+		
+
+//画头像下的棋子颜色
+		if(ComputerChessColor.equals("white")) {
+			g2.drawImage(Room.chessWhite.getImage(), 150,260,60,60,this);
+			if(!gameplayer2.equals(""))
+			g2.drawImage(Room.chessBlack.getImage(), 150,750,60,60,this);
+		}else {
+			g2.drawImage(Room.chessBlack.getImage(), 150,260,60,60,this);
+			if(!gameplayer2.equals(""))
+			g2.drawImage(Room.chessWhite.getImage(), 150,750,60,60,this);
 		}
 	
-		//画头像下的棋子颜色
-				if(MyChessColor.equals("white")) {
-					g2.drawImage(Room.chessWhite.getImage(), 150,260,60,60,this);
-					if(!gameplayer2.equals(""))
-					g2.drawImage(Room.chessBlack.getImage(), 150,750,60,60,this);
-				}else {
-					g2.drawImage(Room.chessBlack.getImage(), 150,260,60,60,this);
-					if(!gameplayer2.equals(""))
-					g2.drawImage(Room.chessWhite.getImage(), 150,750,60,60,this);
-				}
+	// 画棋子
+		chessPoint.forEach((e)->{
+			String msg[] = e.split(",");
+			if(msg[0].equals("black")) {
+				g2.drawImage(hqizi, (int)Integer.parseInt(msg[1])-30,(int)Integer.parseInt(msg[2])-30,60,60,this);
+			}else {
+				g2.drawImage(bqizi, (int)Integer.parseInt(msg[1])-34,(int)Integer.parseInt(msg[2])-20,60,60,this);
+			}
 			
-			// 画棋子
-				chessPoint.forEach((e)->{
-					String msg[] = e.split(",");
-					if(msg[0].equals("black")) {
-						g2.drawImage(hqizi, (int)Integer.parseInt(msg[1])-30,(int)Integer.parseInt(msg[2])-30,60,60,this);
-					}else {
-						g2.drawImage(bqizi, (int)Integer.parseInt(msg[1])-34,(int)Integer.parseInt(msg[2])-20,60,60,this);
-					}
+		});
+		// 最后一个棋子标红点
+		if(chessPoint.size()>=1) {
+			int x = (int)Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[1]);
+			int y = (int)Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[2]);
+			g2.setColor(Color.red);
+			g2.fillOval(x, y, 8, 8);
+		}
+
+		if(MouseAtChess) {
+			if(!isme) {
+				g2.drawImage(stopImage.getImage(), (int)mouseMove.getX()-25,(int)mouseMove.getY()-25,45,45,stopImage.getImageObserver());
+				
+			}else {
+				if(ComputerChessColor.equals("white")) {
+					g2.drawImage(bqizi, (int)mouseMove.getX()-40,(int)mouseMove.getY()-20,60,60,this);
 					
-				});
-				// 最后一个棋子标红点
-				if(chessPoint.size()>=1) {
-					int x = (int)Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[1]);
-					int y = (int)Integer.parseInt(chessPoint.get(chessPoint.size()-1).split(",")[2]);
-					g2.setColor(Color.red);
-					g2.fillOval(x, y, 8, 8);
+					
+				}else {
+					g2.drawImage(hqizi, (int)mouseMove.getX()-30,(int)mouseMove.getY()-30,60,60,this);
+				
 				}
-		//画移动棋子 因为移动棋子过快 开个线程画
-		new PaintMoveChess(bf,g,g2,this).start();
+			}
+
+		}
+		if(musicing) {
+			
+			g2.drawImage(GamePlane.StopBG.getImage(), 1200, 30,50,50, this);
+		}else {
+			
+			g2.drawImage(GamePlane.beginBG.getImage(), 1200, 30,50,50, this);
+		}
+		
 		
 		g.drawImage(bf,0,0,this);
 	}
@@ -803,16 +620,10 @@ class GamePlane extends JSplitPane implements MouseListener{
 				return;
 			}
 			int i =JOptionPane.showConfirmDialog(this, "你确定要认输吗","认输",2);
-			if(i==0) {
-				try {
-					BeginWindow.out.write("MSGTYPE:ChessGameing#renshu\r\n");
-					HisplayGamewinnum++;
-					BeginWindow.out.flush();
-					GameWinAfter(this);
-				} catch (IOException e1) {
-					
-					e1.printStackTrace();
-				}
+			if(i==0) {	
+				ComputerGamewinnum++;
+				GameWinAfter(this);
+				
 			}
 		
 		}else if (e.getX()>=710&&e.getX()<=830&&e.getY()>=820-40&&e.getY()<=880-40) {
@@ -826,19 +637,10 @@ class GamePlane extends JSplitPane implements MouseListener{
 				return;
 			}
 			if(allChess[rx][ry]!=MyChessColorINT) {
-				JOptionPane.showMessageDialog(this, "对方已经落子你不能悔棋");
-				return;
-			}
-
-			int i =JOptionPane.showConfirmDialog(this, "你确定要悔棋吗","悔棋",2);
-			if(i==0) {
-				try {
-					BeginWindow.out.write("MSGTYPE:ChessGameing#huiqi\r\n");
-					BeginWindow.out.flush();
-				} catch (IOException e1) {
-					
-					e1.printStackTrace();
-				}
+				chessPoint.remove(chessPoint.size()-1);
+				chessPoint.remove(chessPoint.size()-1);
+			}else {
+				chessPoint.remove(chessPoint.size()-1);
 			}
 		
 		}else if (e.getX()>=910&&e.getX()<=1030&&e.getY()>=820-40&&e.getY()<=880-40) {
@@ -849,75 +651,15 @@ class GamePlane extends JSplitPane implements MouseListener{
 			}
 			int i =JOptionPane.showConfirmDialog(this, "你确定要和棋吗","和棋",2);
 			if(i==0) {
-				try {
-					BeginWindow.out.write("MSGTYPE:ChessGameing#heqi\r\n");
-					BeginWindow.out.flush();
-				} catch (IOException e1) {
-					
-					e1.printStackTrace();
-				}
+				GameWinAfter(this);
 			}
 			
 		}else if (e.getX()>=650&&e.getX()<=830&&e.getY()>=80-40&&e.getY()<=140-40) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-			if(!kaishi) {
-				if(chessBoard.RoomType.equals("CreateRoom")) {
-					//判断时候准备了
-					
-						if(zhunbei) {
-							
-							try {
-								BeginWindow.out.write("MSGTYPE:GAMEBEGIN\r\n");
-								BeginWindow.out.flush();
-								kaishi = true;
-								System.out.println("开始游戏了");
-								GameRoomUtil.palyothermusic("source/begin.mp3");
-							} catch (IOException e1) {
-								
-								e1.printStackTrace();
-							}
-							
-						}else {
-							if(gameplayer2!=null) {
-								JOptionPane.showMessageDialog(chessBoard, gameplayer2+"还没有准备，无法开始游戏~");
-								System.out.println("他还没有还没有准备");
-								kaishi = false;
-							}else {
-								JOptionPane.showMessageDialog(chessBoard, "还没有玩家加入您的房间！无法开始游戏~");
-								System.out.println("还没有玩家加入您的房间！无法开始游戏！");
-							}
-						
-						}
-						
-					
-					//加入玩家点击已准备发送消息
-				}else {
-					
-					if(zhunbei) {
-						zhunbei= false;
-						try {
-							BeginWindow.out.write("MSGTYPE:GAMEREADY#0\r\n");
-							BeginWindow.out.flush();
-						} catch (IOException e1) {
-							
-							e1.printStackTrace();
-						}
-						System.out.println("未准备！");
-					}else {
-						zhunbei = true;
-						System.out.println("已准备！");
-						try {
-							BeginWindow.out.write("MSGTYPE:GAMEREADY#1\r\n");
-							BeginWindow.out.flush();
-						} catch (IOException e1) {
-							
-							e1.printStackTrace();
-						}
-					}
-					//给服务器发送消息  zhunbei的状态;
-					
-				}
-			}
+			kaishi = true;
+			System.out.println("开始游戏了");
+			GameRoomUtil.palyothermusic("source/begin.mp3");
+			
 		}else if (e.getX()>=1200&&e.getX()<=1250&&e.getY()>=30&&e.getY()<=80) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			if(musicing) {
@@ -959,13 +701,13 @@ class GamePlane extends JSplitPane implements MouseListener{
 	public  void GameWinAfter(GamePlane gamepanel) {
 		gamepanel.isme = true;
 		gamepanel.PlayGamenum++;
-		zhunbei = false;
+		
 		kaishi = false;
 		isme = true;
-		System.out.println("当前总局数："+PlayGamenum+"对方的局数："+HisplayGamewinnum);
+		System.out.println("当前总局数："+PlayGamenum+"对方的局数："+ComputerGamewinnum);
 		System.out.println("当前总局数："+PlayGamenum+"你赢的局数："+MyplayGamewinnum);
 		MYWINLV = (double)MyplayGamewinnum/PlayGamenum;
-		HisWINLV = (double)HisplayGamewinnum/PlayGamenum;
+		CopputerWINLV = (double)ComputerGamewinnum/PlayGamenum;
 		
 		chessPoint.clear();
 		for (int i = 0; i < allChess.length; i++) {
@@ -973,13 +715,19 @@ class GamePlane extends JSplitPane implements MouseListener{
 				allChess[i][j]=0;
 			}
 		}
-		if(gamepanel.MyChessColor.equals("white")) {
-			gamepanel.MyChessColorINT = 2;
-			gamepanel.MyChessColor = "black";
+		if(gamepanel.ComputerChessColor.equals("white")) {
+			gamepanel.ComputerChessColor = "black";
+			gamepanel.ComputerChessColorINT = 2;
+			
+			gamepanel.MyChessColor = "white";
+			gamepanel.MyChessColorINT = 1;
 			
 		}else {
-			gamepanel.MyChessColorINT = 1;
-			gamepanel.MyChessColor = "white";
+			gamepanel.ComputerChessColor = "white";
+			gamepanel.ComputerChessColorINT = 1;
+			
+			gamepanel.MyChessColor = "black";
+			gamepanel.MyChessColorINT = 2;
 			
 		}
 	}
