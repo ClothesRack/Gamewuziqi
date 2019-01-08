@@ -26,6 +26,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
+
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -302,7 +304,7 @@ class xiaqiThread extends Thread{
 					return;
 				}
 				// 白1黑2
-				if(gmplane.ComputerChessColor.equals("white")) {
+				if(gmplane.MyChessColor.equals("white")) {
 					gmplane.allChess[gmplane.rx][gmplane.ry] =1;
 				}else {
 					gmplane.allChess[gmplane.rx][gmplane.ry] =2;
@@ -339,7 +341,9 @@ class xiaqiThread extends Thread{
 		List<String> chessPoint = gamePlane.chessPoint;
 		//找到下棋子的点
 		prevent(gamePlane);
-		
+		// 目前随机下点 没时间完善
+		gmplane.rx = new Random().nextInt(14);
+		gmplane.ry = new Random().nextInt(14);
 		//如果当前位置没有棋子
 		if(allChess[gmplane.rx][gmplane.ry]==0) {
 			if(gmplane.ComputerChessColor.equals("white")) {
@@ -416,12 +420,14 @@ class GamePlane extends JSplitPane implements MouseListener{
 	String gameplayer2 ="风萧萧兮易水寒";
 	
 	
-	
-	String MyChessColor ="black";
-	String ComputerChessColor ="witer";
 	//白1黑2
+	String MyChessColor ="black";
 	int MyChessColorINT =2;
+	String ComputerChessColor ="white";
 	int ComputerChessColorINT = 1;
+	
+	
+	
 	BufferedImage Colorstaus;
 	//胜率
 	double MYWINLV = 0;
@@ -579,7 +585,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 				g2.drawImage(stopImage.getImage(), (int)mouseMove.getX()-25,(int)mouseMove.getY()-25,45,45,stopImage.getImageObserver());
 				
 			}else {
-				if(ComputerChessColor.equals("white")) {
+				if(MyChessColor.equals("white")) {
 					g2.drawImage(bqizi, (int)mouseMove.getX()-40,(int)mouseMove.getY()-20,60,60,this);
 					
 					
@@ -659,6 +665,13 @@ class GamePlane extends JSplitPane implements MouseListener{
 			kaishi = true;
 			System.out.println("开始游戏了");
 			GameRoomUtil.palyothermusic("source/begin.mp3");
+			//如果电脑先手
+			if(ComputerChessColorINT==2) {
+				rx = new Random().nextInt(14);
+				ry = new Random().nextInt(14);
+				allChess[rx][ry] = ComputerChessColorINT;
+				chessPoint.add(ComputerChessColor+","+(rx*45+430)+","+(ry*45+110));
+			}
 			
 		}else if (e.getX()>=1200&&e.getX()<=1250&&e.getY()>=30&&e.getY()<=80) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
@@ -730,6 +743,8 @@ class GamePlane extends JSplitPane implements MouseListener{
 			gamepanel.MyChessColorINT = 2;
 			
 		}
+		
+	
 	}
 	
 	public boolean checkwin() {
