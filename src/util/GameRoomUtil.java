@@ -68,7 +68,7 @@ public class GameRoomUtil {
 			}
 			
 		
-				//画矩形
+				//画矩形  左上角的坐标 相对于字体来说 横坐标-30  纵坐标-40
 			g2.drawRect(i-30,j-40,k,l);
 
 			g2.drawString(string,i,j);

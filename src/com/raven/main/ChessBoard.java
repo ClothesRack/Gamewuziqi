@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -21,6 +22,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -61,7 +63,7 @@ public class ChessBoard extends JFrame {
 				setLayout(null);
 				
 				//设置标题
-				this.setTitle("五子棋");
+				this.setTitle("五子棋对战棋盘");
 				//设置窗体大小
 				this.setSize(ChessBoardWidth, ChessBoardHeight);
 				//设置窗体出现位置
@@ -124,7 +126,7 @@ public class ChessBoard extends JFrame {
 				//chatPlane.add(jt);
 				chatPlane.add(send);
 				chatPlane.add(sendtext);
-				jt.setForeground(Color.green);
+				jt.setForeground(new Color(180, 143, 160));
 				jt.append("系统："+gamepanel.dateFormat.format(new Date())+"\n"+"   欢迎加入游戏厅，希望来到这里能给你带来快乐，与室友一起组队开黑吧~~\n");	
 				
 				send.addActionListener(new ActionListener() {
@@ -224,7 +226,7 @@ class WindowEvent implements WindowListener{
 					BeginWindow.out.write("MSGTYPE:BreakGame\r\n");
 					BeginWindow.out.flush();
 					
-					Room.MSG = GameRoomUtil.GetGames(chessBoard.parFrame);
+					
 				}else {
 					return;
 				}
@@ -239,16 +241,20 @@ class WindowEvent implements WindowListener{
 				}
 				BeginWindow.out.write(msg);
 				BeginWindow.out.flush();
-				
-				
-				
-				chessBoard.dispose();
-				GameRoomUtil.stopmusic();//停止播放音乐
 				chessBoard.parFrame.setVisible(true);
+				Room.MSG = GameRoomUtil.GetGames(chessBoard.parFrame);
+				
+			
 			}
 		} catch (IOException e1) {
-		
-		
+			//JOptionPane.showMessageDialog(chessBoard, e1.getMessage());
+			chessBoard.parFrame.priwid.setVisible(true);
+			
+			
+		}finally {
+			chessBoard.dispose();
+			GameRoomUtil.stopmusic();//停止播放音乐
+			
 		}
 			
 		
@@ -464,8 +470,12 @@ class getServerMsg extends Thread{
 				}
 				gmPlane.repaint();
 			} catch (IOException e) {
-				
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(gmPlane, "您可能已经与服务器断开了连接。。");
+				gmPlane.chessBoard.setVisible(false);
+				GameRoomUtil.stopmusic();
+				gmPlane.chessBoard.parFrame.priwid.setVisible(true);
+				System.out.println("sb线程退出");
+				break;
 			}
 		}
 		System.out.println("sb线程退出");
@@ -660,9 +670,13 @@ class GamePlane extends JSplitPane implements MouseListener{
 						
 					}
 					MouseAtChess = true;
-					
+					URL classUrl = this.getClass().getResource("");  
+					Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
+					setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+					                    imageCursor,  new Point(0, 0), "cursor"));  
 				}else {
 					MouseAtChess = false;
+					setCursor(null);
 				}
 				
 				repaint();
@@ -712,7 +726,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 		g2.drawImage(man.getImage(), 130,10,150,150,man.getImageObserver());
 		g2.drawString(gameplayer1, 150,200);
 		g2.drawString("胜率"+String.format("%.2f", MYWINLV*100)+"%", 130,240);
-		if(gameplayer2!="") {
+		if(!gameplayer2.equals("")) {
 			g2.drawImage(women.getImage(), 130,470,150,150,women.getImageObserver());
 			g2.drawString(gameplayer2, 150,660);
 			g2.drawString("胜率"+String.format("%.2f", HisWINLV*100)+"%", 130,700);
@@ -878,7 +892,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 							}
 							
 						}else {
-							if(gameplayer2!=null) {
+							if(!gameplayer2.equals("")) {
 								JOptionPane.showMessageDialog(chessBoard, gameplayer2+"还没有准备，无法开始游戏~");
 								System.out.println("他还没有还没有准备");
 								kaishi = false;

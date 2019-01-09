@@ -213,9 +213,16 @@ public class ConnectTomsg implements Runnable{
 			} catch (IOException e) {
 				IOEX();
 				try {
-					otherBW.close();
-					otherSocket.close();
-					otherSocket = null;
+					if(otherBW!=null) {
+						otherBW.close();
+					}
+					if(otherSocket!=null) {
+						otherSocket.close();
+					}else {
+						otherSocket = null;
+					}
+					
+					
 				} catch (IOException e1) {
 					
 					e1.printStackTrace();

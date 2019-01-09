@@ -68,7 +68,7 @@ public class ComputerGame extends JFrame {
 				setLayout(null);
 				
 				//设置标题
-				this.setTitle("五子棋");
+				this.setTitle("人机对战");
 				//设置窗体大小
 				this.setSize(ChessBoardWidth, ChessBoardHeight);
 				//设置窗体出现位置

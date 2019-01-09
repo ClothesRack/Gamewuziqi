@@ -1,11 +1,14 @@
 package com.raven.main;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
@@ -14,6 +17,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -22,6 +26,8 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -49,13 +55,15 @@ public class BeginWindow extends JFrame{
 	MyPlane myplane;
 	public BeginWindow(){
 		setSize(530,700);
+		setTitle("五子棋网络版  By Raven");
 		setResizable(false);
 		setLayout(null);
 		GameRoomUtil.CenterWindow(this);
 		setVisible(true);
 		
-		//Cursor cursor   = tk.createCustomCursor(image, new Point(10,10),"norm");
-		//setCursor(cursor);
+		
+	
+		
 		
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -90,7 +98,7 @@ class MyPlane extends JPanel implements MouseListener{
 	static Boolean mousedown = false;
 	int i= 0,y =100,j=20;
 	int modelint = 0;
-	
+	Timer timer;
 	static String serverIp = "127.0.0.1";
 
 	public MyPlane() {
@@ -98,6 +106,7 @@ class MyPlane extends JPanel implements MouseListener{
 	}
 	
 	public MyPlane(BeginWindow beginWindow) {
+		
 		this.beginWindow = beginWindow;
 		//针对鼠标移动的接口  
 				this.addMouseMotionListener(new MouseMotionAdapter() {
@@ -153,7 +162,11 @@ class MyPlane extends JPanel implements MouseListener{
 			String msg = "你越觉得自己爱什么";
 			String msg2= "那么你就越对什么爱的着迷~";
 			String msg3 = "BY  Raven";
-			Timer timer = new Timer();
+			if(timer!=null) {
+				timer.cancel();
+			}
+			
+			timer = new Timer();
 			timer.schedule(new TimerTask() {
 				
 				@Override
@@ -204,7 +217,7 @@ class MyPlane extends JPanel implements MouseListener{
 			
 		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=260&&p.getY()<=320&&modelint==0) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-			System.out.println("人机窗口！！");
+			//System.out.println("人机窗口！！");
 			//隐藏该窗口 创建人机窗口
 			
 			String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
@@ -228,7 +241,8 @@ class MyPlane extends JPanel implements MouseListener{
 			modelint=2;
 			repaint();
 			//  y坐标注意要减字体大小的像素
-		}else if (p.getX()>=150&&p.getX()<=400&&p.getY()>=500-30&&p.getY()<=550-30&&(modelint==1||modelint==2)) {
+			//点击 返回上一界面
+		}else if (p.getX()>=150-30&&p.getX()<=400-30&&p.getY()>=500-40&&p.getY()<=550-40&&(modelint==1||modelint==2)) {
 			modelint=0;
 			
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
@@ -273,26 +287,31 @@ class MyPlane extends JPanel implements MouseListener{
 			
 			if(i==0) {
 				URL ip=new URL("http://raven.iask.in");
+				System.out.println(ip.getHost());
 				BeginWindow.socket = new Socket(ip.getHost(), 12790);
 			}else {
-				serverIp  = JOptionPane.showInputDialog(this, "请输入服务器IP地址");
-				if(serverIp==null||serverIp.equals(""))return;
+				serverIp  = JOptionPane.showInputDialog(this, "请输入服务器IP地址(默认为127.0.0.1)");
+				if(serverIp==null)return;
+				if(serverIp.equals("")) {
+					serverIp ="127.0.0.1";
+				}
 				BeginWindow.socket = new Socket(serverIp,6666);
 			}
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this, "服务器连接失败！请检查地址是否正确");
 			return;
 		}
-		BeginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~").trim();
-			if(BeginWindow.username==null||BeginWindow.username.equals("")) {
+		String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+			if(username==null||username.equals("")) {
 				return;
 			}
-			if(BeginWindow.username.length()>=12) {
+			
+			if(username.length()>=12) {
 				JOptionPane.showMessageDialog(this, "昵称不要太长哦");
 				return;
 			}
-			System.out.println("欢迎"+BeginWindow.username+"加入游戏厅");
-			
+		
+			BeginWindow.username =username.trim();
 		
 			
 			try {
@@ -301,21 +320,28 @@ class MyPlane extends JPanel implements MouseListener{
 				BeginWindow.out.write("MSGTYPE:username#"+beginWindow.username+"\r\n");
 				BeginWindow.out.flush();
 				//接受名字是否重复的消息
-				if(BeginWindow.in.readLine().split("#")[1].equals("1")){
-					JOptionPane.showMessageDialog(this, "在线玩家存在当前名字！，请重新取个名字吧~");
-					return ;
+				String msg = BeginWindow.in.readLine();
+				
+				if(msg!=null) {
+					if(msg.split("#")[1].equals("1")){
+						JOptionPane.showMessageDialog(this, "在线玩家存在当前名字！，请重新取个名字吧~");
+						return ;
+					}
+					beginWindow.setVisible(false);
+					new Room(beginWindow);
+				}else {
+					JOptionPane.showMessageDialog(this, "Raven的服务器连接失败了，请开启本地Server吧~");
 				}
-				beginWindow.setVisible(false);
-				new Room(beginWindow);
+				System.out.println("欢迎"+username+"加入游戏厅");
 			} catch (HeadlessException e) {
-				
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, e.getMessage());
+				//e.printStackTrace();
 			} catch (UnsupportedEncodingException e) {
-				
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, e.getMessage());
+				//e.printStackTrace();
 			} catch (IOException e) {
-			
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, e.getMessage());
+				//e.printStackTrace();
 			}
 			
 		
