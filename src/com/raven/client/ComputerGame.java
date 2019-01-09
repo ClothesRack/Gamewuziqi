@@ -133,7 +133,7 @@ public class ComputerGame extends JFrame {
 				//chatPlane.add(jt);
 				chatPlane.add(send);
 				chatPlane.add(sendtext);
-				jt.setForeground(Color.green);
+				jt.setForeground(new Color(180, 143, 160));
 				jt.append("系统："+gamepanel.dateFormat.format(new Date())+"\n"+"   欢迎加入游戏厅，希望来到这里能给你带来快乐，与室友一起组队开黑吧~~\n");	
 				jt.append("系统："+gamepanel.dateFormat.format(new Date())+"\n"+"   目前人机下子随机，不是侮辱人的智商啊，还没有时间研究智能下子算法，还请多多包涵~~\n");	
 				send.addActionListener(new ActionListener() {
