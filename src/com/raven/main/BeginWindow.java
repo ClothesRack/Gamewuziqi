@@ -100,7 +100,7 @@ class MyPlane extends JPanel implements MouseListener{
 	int modelint = 0;
 	Timer timer;
 	static String serverIp = "127.0.0.1";
-
+	String username ;
 	public MyPlane() {
 	
 	}
@@ -219,8 +219,8 @@ class MyPlane extends JPanel implements MouseListener{
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			//System.out.println("人机窗口！！");
 			//隐藏该窗口 创建人机窗口
-			
-			String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+			if(username==null)
+				username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
 			if(username!=null) {
 				if(username.equals("")) {
 					JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
