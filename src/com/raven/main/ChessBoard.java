@@ -630,7 +630,9 @@ class GamePlane extends JSplitPane implements MouseListener{
 	int PlayGamenum = 0;
 	boolean zhunbei = false;
 	boolean kaishi = false;
-
+	
+	URL classUrl = this.getClass().getResource("");  
+	Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
 	public GamePlane(ChessBoard chessBoard,String gameplayer1) {
 		setLayout(null);
 		
@@ -670,8 +672,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 						
 					}
 					MouseAtChess = true;
-					URL classUrl = this.getClass().getResource("");  
-					Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
+					
 					setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
 					                    imageCursor,  new Point(0, 0), "cursor"));  
 				}else {

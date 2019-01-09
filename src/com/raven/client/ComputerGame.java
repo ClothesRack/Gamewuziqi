@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -21,6 +22,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -456,6 +458,10 @@ class GamePlane extends JSplitPane implements MouseListener{
 	boolean kaishi = false;
 	ImageIcon man = new ImageIcon("source/man.jpg");
 	ImageIcon women = new ImageIcon("source/women.jpg");
+	
+	URL classUrl = this.getClass().getResource("");  
+	Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
+	
 	public GamePlane(ComputerGame chessBoard,String gameplayer1) {
 		setLayout(null);
 		
@@ -495,9 +501,11 @@ class GamePlane extends JSplitPane implements MouseListener{
 						
 					}
 					MouseAtChess = true;
-					
+					setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+		                    imageCursor,  new Point(0, 0), "cursor"));  
 				}else {
 					MouseAtChess = false;
+					setCursor(null);
 				}
 				
 				repaint();
