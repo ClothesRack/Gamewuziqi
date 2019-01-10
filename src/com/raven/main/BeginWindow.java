@@ -35,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
 import com.raven.client.ComputerGame;
+import com.raven.client.GameClient;
 
 import util.GameRoomUtil;
 
@@ -53,6 +54,7 @@ public class BeginWindow extends JFrame{
 	static String username = null;
 	static public Socket socket = null;
 	MyPlane myplane;
+	static public Room room;
 	public BeginWindow(){
 		setSize(530,700);
 		setTitle("五子棋网络版  By Raven");
@@ -120,7 +122,7 @@ class MyPlane extends JPanel implements MouseListener{
 					//按住鼠标移动才生效
 					public void mouseDragged(MouseEvent e) {
 						//System.out.println("鼠标按下不松拖动点的轨迹");
-						System.out.println(e.getPoint());
+						//System.out.println(e.getPoint());
 					}
 				});
 				addMouseListener(this);
@@ -219,20 +221,20 @@ class MyPlane extends JPanel implements MouseListener{
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			//System.out.println("人机窗口！！");
 			//隐藏该窗口 创建人机窗口
-			if(beginWindow.username==null) {
-				beginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
-				if(beginWindow.username==null) {
+			if(BeginWindow.username==null) {
+				BeginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+				if(BeginWindow.username==null) {
 					return;
 				}
 			}
 				
 			
-			if(beginWindow.username.equals("")) {
-				beginWindow.username =null;
+			if(BeginWindow.username.equals("")) {
+				BeginWindow.username =null;
 				JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
 				return;
 			}
-			ComputerGame computerGame= new ComputerGame(beginWindow, beginWindow.username.trim());
+			new ComputerGame(beginWindow, BeginWindow.username.trim());
 			beginWindow.setVisible(false);
 			
 			repaint();
@@ -307,7 +309,7 @@ class MyPlane extends JPanel implements MouseListener{
 			JOptionPane.showMessageDialog(this, "服务器连接失败！请检查地址是否正确");
 			return;
 		}
-		if(beginWindow.username==null) {
+		if(BeginWindow.username==null) {
 			String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
 			if(username==null||username.equals("")) {
 				return;
@@ -326,18 +328,16 @@ class MyPlane extends JPanel implements MouseListener{
 			try {
 				BeginWindow.out = new BufferedWriter(new OutputStreamWriter(BeginWindow.socket.getOutputStream(),"UTF-8"));
 				BeginWindow.in = new BufferedReader(new InputStreamReader(BeginWindow.socket.getInputStream(),"UTF-8"));
-				BeginWindow.out.write("MSGTYPE:username#"+beginWindow.username+"\r\n");
-				BeginWindow.out.flush();
-				//接受名字是否重复的消息
-				String msg = BeginWindow.in.readLine();
-				
-				if(msg!=null) {
-					if(msg.split("#")[1].equals("1")){
+				GameRoomUtil.SendToServerMsg(beginWindow, "MSGTYPE:username#"+BeginWindow.username+"\r\n");	
+				GameRoomUtil.ResultMsg();
+				if(GameClient.MSG!=null) {
+					if(GameClient.MSG.equals("1")){
 						JOptionPane.showMessageDialog(this, "在线玩家存在当前名字！，请重新取个名字吧~");
+						BeginWindow.username =null;
 						return ;
 					}
 					beginWindow.setVisible(false);
-					new Room(beginWindow);
+					BeginWindow.room = new Room(beginWindow);
 				}else {
 					JOptionPane.showMessageDialog(this, "Raven的服务器连接失败了，请开启本地Server吧~");
 				}

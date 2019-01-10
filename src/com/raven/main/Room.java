@@ -29,6 +29,8 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.xml.stream.events.Namespace;
 
+import com.raven.client.GameClient;
+
 import util.GameRoomUtil;
 
 public class Room extends JFrame {
@@ -44,7 +46,7 @@ public class Room extends JFrame {
 	public static ImageIcon chessWhite = new ImageIcon("source/chessWhite.png");
 	public static ImageIcon chessBlack = new ImageIcon("source/chessBlack.png");
 	
-	public static String MSG;
+	
 	public JPanel roomPlane;
 	public BeginWindow priwid;
 
@@ -69,8 +71,8 @@ public class Room extends JFrame {
 		setSize(800, 800);
 		GameRoomUtil.CenterWindow(this);
 		
-		MSG = GameRoomUtil.GetGames(this);
-		
+		GameRoomUtil.SendToServerMsg(this,"MSGTYPE:GetOnlineGame\r\n");
+		GameRoomUtil.ResultMsg();
 		roomPlane = new RoomPlane(this);
 		roomPlane.setSize(800,800);
 		roomPlane.setLocation(0, 0);
@@ -106,7 +108,7 @@ public class Room extends JFrame {
 };
 class MouseThing extends MouseAdapter{
 	RoomPlane roomPlane;
-	
+	String lastMsg = null;
 	
 	public MouseThing(){
 		
@@ -115,52 +117,45 @@ class MouseThing extends MouseAdapter{
 		this.roomPlane = roomPlane;
 	}
 	public void mouseClicked(MouseEvent e) {
-		//为什么点击一次会出校好多个点击一次？？
+		//为什么点击一次会出现好多个点击一次？？
 				//或许跟新增了多个监听器有关系！！！
 		//System.out.println("点击一次");
 		//如果击中为假  防止点击一次发送多次 
-		if(!roomPlane.hide) {
+				//已经验证是 所以注释掉了 删除多余的监听器
+	//	if(!roomPlane.hide) {
 			//x -30  Y-40是矩形的左上角的点
 			if(roomPlane.p.getX()>=100-30&&roomPlane.p.getX()<=100-30+roomPlane.rectwidth&&roomPlane.p.getY()>=roomPlane.lasty-40&&roomPlane.p.getY()<=roomPlane.lasty-40+roomPlane.rectheight) {
 				GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-				try {
-					//给服务端发送创建房间消息
-					BeginWindow.out.write("MSGTYPE:CreateGameRoom#"+BeginWindow.username+"\r\n");
-					BeginWindow.out.flush();
-					//然后设置当前窗口不可见
-					roomPlane.room.setVisible(false);
-					//棋盘窗口
-					new ChessBoard(roomPlane.room,"CreateRoom",BeginWindow.username);
-					
-				} catch (IOException e1) {
-					
-					JOptionPane.showMessageDialog(roomPlane, "创建房间失败了！您可能已经与服务器断开了连接。。");
-					roomPlane.room.setVisible(false);
-					roomPlane.room.priwid.setVisible(true);
-					System.out.println("创建房间失败！");
-				}
-			
+				//给服务端发送创建房间消息
+				GameRoomUtil.SendToServerMsg(roomPlane.room,"MSGTYPE:CreateGameRoom#"+BeginWindow.username+"\r\n");
+				
+				//然后设置当前窗口不可见
+				roomPlane.room.setVisible(false);
+				//棋盘窗口
+				new ChessBoard(roomPlane.room,"CreateRoom",BeginWindow.username);
+		
 			
 			}else if(roomPlane.p.getX()>=500-30&&roomPlane.p.getX()<=500-30+roomPlane.rectwidth&&roomPlane.p.getY()>=roomPlane.lasty-40&&roomPlane.p.getY()<=roomPlane.lasty-40+roomPlane.rectheight) {
-				GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-				try {
-					//获取在线游戏房间列表
-					BeginWindow.out.write("MSGTYPE:GetOnlineGame\r\n");
-					BeginWindow.out.flush();
-					String qtext =  BeginWindow.in.readLine();
-					Room.MSG =qtext;
-					System.out.println("刷新成功！");
-					System.out.println("获取棋盘列表");
-					JOptionPane.showMessageDialog(roomPlane, "刷新成功！");
-					//每次重绘必须清空这个hasplayer
-					roomPlane.hasplayer.clear();
-				} catch (IOException e1) {
-					JOptionPane.showMessageDialog(roomPlane, "刷新失败！您可能已经与服务器断开了连接。。");
-					roomPlane.room.setVisible(false);
-					roomPlane.room.priwid.setVisible(true);
-					System.out.println("刷新失败！");
-				} 
 				
+				GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+				//获取在线游戏房间列表	
+				GameRoomUtil.SendToServerMsg(roomPlane.room,"MSGTYPE:GetOnlineGame\r\n");
+				GameRoomUtil.ResultMsg();
+				JOptionPane.showMessageDialog(roomPlane, "刷新成功！");
+				//System.out.println("获取棋盘列表:\r\n"+GameClient.MSG);
+				//每次刷新必须清空这个hasplayer
+				roomPlane.hasplayer.clear();
+				//删除重复的监听器 只留下一个最终的
+				//只有当房间更新的时候再添加新的监听器
+				if(lastMsg!=null&&!lastMsg.equals(GameClient.MSG)) {
+					if(roomPlane.mous!=null) {
+						roomPlane.removeMouseListener(roomPlane.mous);
+					}
+					roomPlane.mous = new MouseThing(roomPlane);
+					roomPlane.addMouseListener(roomPlane.mous);
+				}
+				
+				lastMsg = GameClient.MSG;
 			//上一页	
 			}else if (roomPlane.p.getX()>=100-30&&roomPlane.p.getX()<=100-30+roomPlane.rectwidth&&roomPlane.p.getY()>=700-40&&roomPlane.p.getY()<=700-40+roomPlane.rectheight) {
 				GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
@@ -184,46 +179,39 @@ class MouseThing extends MouseAdapter{
 				for(int i = 0;i<roomPlane.Y/80;i++) {
 					if (roomPlane.p.getX()>=400-30&&roomPlane.p.getX()<=400-30+roomPlane.rectwidth&&roomPlane.p.getY()>=80*(i+1)+40-40&&roomPlane.p.getY()<=80*(i+1)+40-40+roomPlane.rectheight) {
 						//System.out.println("要加入游戏了");
-						try {
-							if(i<roomPlane.hasplayer.size())
-							if(roomPlane.hasplayer.get(i).equals("0")) {
-								GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-																		//namemap存放的是当前也的所有姓名
-								BeginWindow.out.write(("MSGTYPE:AddGamePlayerName#"+roomPlane.nameMap.get(""+i))+"\r\n");
-								BeginWindow.out.flush();
-								String RoomStaus = BeginWindow.in.readLine();
-								if(RoomStaus.split("#")[1].equals("yes")) {
-									Room.MSG = BeginWindow.in.readLine();
-									roomPlane.repaint();
-									
-										/*
-										 * 可以不用设置 因为repaint会重新赋值
-										 * 我错了 这里需要设置一下 为什么呢 ？虽然repaint会重新赋值 但是前提是针对有房间的情况下
-										 * 	就是说房间有人已经加入了房间  再次加入
-										 *	加入就提示一次加入失败。然后再次点击就不会进来这个逻辑
-										 *	然而 设置下重新赋值为1又是因为什么原因呢 是因为 如果房间为空了 那么paintjiu不会给hasplayer赋值
-										 *	会导致没有房间也会提示房间状态已改变
-										 */		
-										roomPlane.hasplayer.set(i, "1");
-										JOptionPane.showMessageDialog(roomPlane, "房间状态已改变，加入失败！");
-							
-									
-								}else {
-									
-									roomPlane.room.setVisible(false);
-									new ChessBoard(roomPlane.room,"ADDRoom",BeginWindow.username);
-									
-								}
+					
+						if(i<roomPlane.hasplayer.size())
+						if(roomPlane.hasplayer.get(i).equals("0")) {
+							GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+						
+																	//namemap存放的是当前也的所有姓名
+							GameRoomUtil.SendToServerMsg(roomPlane.room,"MSGTYPE:AddGamePlayerName#"+roomPlane.nameMap.get(""+i)+"\r\n");
+							GameRoomUtil.ResultMsg();
+							if(GameClient.MSG.equals("yes")) {
+								//注意 如果该房间已经加入人了，那么就要在读一次，因为服务器会自动给客户端发送最新棋盘
+								GameRoomUtil.ResultMsg();
+									/*
+									 * 可以不用设置 因为repaint会重新赋值
+									 * 我错了 这里需要设置一下 为什么呢 ？虽然repaint会重新赋值 但是前提是针对有房间的情况下
+									 * 	就是说房间有人已经加入了房间  再次加入
+									 *	加入就提示一次加入失败。然后再次点击就不会进来这个逻辑
+									 *	然而 设置下重新赋值为1又是因为什么原因呢 是因为 如果房间为空了 那么paintjiu不会给hasplayer赋值
+									 *	会导致没有房间也会提示房间状态已改变
+									 */		
+									roomPlane.hasplayer.set(i, "1");
+									JOptionPane.showMessageDialog(roomPlane, "房间状态已改变，加入失败,请刷新后重试！");
+						
+								
+							}else {
+								
+								roomPlane.room.setVisible(false);
+								new ChessBoard(roomPlane.room,"ADDRoom",BeginWindow.username);
+								
 							}
-							
-							
-						} catch (IOException e1) {
-							
-							JOptionPane.showMessageDialog(roomPlane, "加入失败了！您可能已经与服务器断开了连接。。");
-							roomPlane.room.setVisible(false);
-							roomPlane.room.priwid.setVisible(true);
-							System.out.println("加入失败！");
 						}
+							
+							
+					
 					}
 				
 				}
@@ -231,9 +219,9 @@ class MouseThing extends MouseAdapter{
 			}
 			roomPlane.repaint();
 			//击中为真
-			roomPlane.hide = true;
+			//roomPlane.hide = true;
 			
-		}
+	//	}
 		
 		
 	}
@@ -245,7 +233,7 @@ class MouseThing extends MouseAdapter{
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		// 松开则 击中为假
-		roomPlane.hide = false;
+		//roomPlane.hide = false;
 		roomPlane.mousedown = false;
 		
 	}
@@ -269,6 +257,7 @@ class RoomPlane extends JPanel{
 	int indexpage = 0;
 	int lastpage = 0;
 	int currpage = 0;
+	MouseThing mous;
 	public boolean hide =false;
 	// 坑爹 的boolean不初始化就是空指针！！！
 	Boolean mousedown = false;
@@ -286,7 +275,8 @@ class RoomPlane extends JPanel{
 	}
 	public RoomPlane(Room room) {
 		this.room = room;
-		
+		mous = new MouseThing(this);
+		addMouseListener(mous);
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
 				p = e.getPoint();
@@ -310,7 +300,7 @@ class RoomPlane extends JPanel{
 		g2.setColor(Color.green);
 		int index = 0;
 		
-		if(Room.MSG==null||Room.MSG.equals("")) {
+		if(GameClient.MSG==null||GameClient.MSG.equals("")) {
 			g2.setFont(new Font("黑体", Font.BOLD, 30));
 			g2.setColor(Color.PINK);
 			g2.drawString("亲爱的："+BeginWindow.username+",当前暂无房间~", 150, 100);
@@ -321,7 +311,7 @@ class RoomPlane extends JPanel{
 			g2.drawString("亲爱的："+BeginWindow.username+",以下是当前服务器房间列表~：", 150, 40);
 			g2.setColor(Color.black);
 			g2.drawString("当前是第："+(currpage+1)+"页,共有"+lastpage+"页。", 220, 750);
-			List<String> m = Arrays.asList(room.MSG.split("#"));
+			List<String> m = Arrays.asList(GameClient.MSG.split("&"));
 			//5个房间为一页
 			int last = m.size()%5;
 					
@@ -382,7 +372,7 @@ class RoomPlane extends JPanel{
 		 *  点击效果怎么实现 以及 房间销毁 取消点击事件   
 		 *  	更好的不是放在paint方法里 而是放入 刷新房间点击事件里 如果房间信息改变 那么重新构造新的监听器 这样写 太不好了 
 		 */
-		addMouseListener(new MouseThing(this));
+		
 		
 		
 	}

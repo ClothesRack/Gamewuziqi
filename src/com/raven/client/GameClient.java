@@ -13,6 +13,8 @@ import util.GameRoomUtil;
 
 
 public class GameClient {
+	public static BeginWindow beginWindow;
+	public static String MSG;
 	public static void main(String[] args) {
 		/*
 		 * 
@@ -41,9 +43,11 @@ public class GameClient {
 	     
 		
 		 try {
-			 UIManager.put("RootPane.setupButtonVisible", false);
+			
+			UIManager.put("RootPane.setupButtonVisible", false);
 			org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
-			new BeginWindow();
+			beginWindow= new BeginWindow();
+		
 		} catch (Exception e) {
 			
 			e.printStackTrace();

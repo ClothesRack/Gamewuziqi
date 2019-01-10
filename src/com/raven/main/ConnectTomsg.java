@@ -30,7 +30,10 @@ public class ConnectTomsg implements Runnable{
 	}		
 	@Override
 	public void run() {
-		
+		/**
+		 * 消息体 组成 
+		 * 	MSGTYPE:消息类型#消息内容。
+		 */
 		
 		try {
 			
@@ -47,6 +50,7 @@ public class ConnectTomsg implements Runnable{
 				
 				String msg = reader.readLine();
 				System.out.println(msg);
+				
 				//如果收到消息是null，说明对方关闭了io流 那么这个线程退出
 				//如果消息类型头不是规定的 那么删掉这个socket连接 
 				if(msg==null||!msg.split(":")[0].equals("MSGTYPE")) {
@@ -54,20 +58,30 @@ public class ConnectTomsg implements Runnable{
 					IOEX();
 					break;
 				}
+				String MsgHeadType[] = msg.split(":");
+				//消息类型
+				String MsgType = MsgHeadType[1].split("#")[0];
+				//消息数据
+				StringBuilder MsgData = new StringBuilder();
+				//等于2说明有消息数据
+				if(msg.split("#").length==2) {
+					MsgData.append(msg.split("#")[1]);
+				}
 				if(!Server.players.containsKey(socket)) {
-						String msgsp[] = msg.split("#");
+					
+						
 						//新加入用户放入在线列表
-						if(msgsp[0].equals("MSGTYPE:username")) {
-							if(Server.players.containsValue(msgsp[1])){//已经有该名字了 提醒玩家重新取名字
+						if(MsgType.equals("username")) {
+							if(Server.players.containsValue(MsgData.toString())){//已经有该名字了 提醒玩家重新取名字
 								writer.write("MSGTYPE:namerepeat#1\r\n");
 								writer.flush();
 								return;
 							}else {
 								writer.write("MSGTYPE:namerepeat#0\r\n");
 								writer.flush();
-								Server.players.put(socket, msgsp[1]);
-								myname = msgsp[1];
-								System.out.println(msgsp[1]+"登录了");
+								Server.players.put(socket, MsgData.toString());
+								myname = MsgData.toString();
+								System.out.println(MsgData+",登录了服务器");
 							}
 							
 						}
@@ -75,25 +89,26 @@ public class ConnectTomsg implements Runnable{
 					
 				}else {
 						
-						String[] msgsplit = msg.split("#");
+						
 						//创建一个房间
-						if(msgsplit[0].equals("MSGTYPE:CreateGameRoom")) {
-							Server.gameRoom.getChessBoards().put(msgsplit[1], null);
+						if(MsgType.equals("CreateGameRoom")) {
+							Server.gameRoom.getChessBoards().put(MsgData.toString(), null);
 
 						}
 						// 发送棋盘list
-						else if(msgsplit[0].equals("MSGTYPE:GetOnlineGame")) {
+						else if(MsgType.equals("GetOnlineGame")) {
 							SendChessBoardlist();
 						//加入者会给服务端发送他要加入房间创建者的姓名
-						}else if(msgsplit[0].equals("MSGTYPE:AddGamePlayerName")) {
+						}else if(MsgType.equals("AddGamePlayerName")) {
 							Server.players.forEach((k,v)->{
-								if(v.equals(msgsplit[1])) {
+								if(v.equals(MsgData.toString())) {
 									//拿到创建房间玩家姓名
 									othername = v;
 									if(Server.gameRoom.getChessBoards().get(v)!=null||!Server.gameRoom.getChessBoards().containsKey(v)) {
 										try {//加入的时候由于刷新导致房间状态改变 加入失败
 											writer.write("MSGTYPE:RoomFullOrRoomDistroy#yes\r\n");
 											writer.flush();
+											//发送棋盘列表
 											SendChessBoardlist();
 											return;
 										} catch (IOException e) {
@@ -122,7 +137,7 @@ public class ConnectTomsg implements Runnable{
 										otherBW.write("MSGTYPE:ADDYourRoom#"+othername+","+myname+",来跟你一起玩游戏啦！\r\n");
 										
 										otherBW.flush();
-										otherBW.write("MSGTYPE:youareblackoriswhite#\r\n");
+										otherBW.write("MSGTYPE:youareblackoriswhite\r\n");
 										otherBW.flush();
 									} catch (IOException e1) {
 										
@@ -132,7 +147,7 @@ public class ConnectTomsg implements Runnable{
 							});
 							
 							//如果正在游戏中
-						}else if (msgsplit[0].equals("MSGTYPE:ChessGameing")) {
+						}else if (MsgType.equals("ChessGameing")) {
 							String gamemsg  = msg.split("#")[1];
 							//悔棋
 							if(gamemsg.split(",").length==1) {//消息分割为1  那么就通知另一方 和棋 认输  悔棋 赢了游戏
@@ -157,9 +172,9 @@ public class ConnectTomsg implements Runnable{
 								otherBW.flush();
 							}
 							//创建者返回自己的名字回来，更新加入者线程的othereBW 对象 让加入者方便与其通信。
-						}else if(msgsplit[0].equals("MSGTYPE:NoticeGameState")) {
+						}else if(MsgType.equals("NoticeGameState")) {
 							Server.players.forEach((k,v)->{
-								if(v.equals(msgsplit[1].split(",")[0])) {
+								if(v.equals(MsgData.toString().split(",")[0])) {
 									try {
 										otherBW = new BufferedWriter(new OutputStreamWriter(k.getOutputStream(),"UTF-8"));
 										othername = v;
@@ -173,36 +188,45 @@ public class ConnectTomsg implements Runnable{
 								}
 							});
 							//拿到自己的颜色发送给加入者
-						}else if(msgsplit[0].equals("MSGTYPE:MyColor")) {
-							otherBW.write("SendHisColor#"+msgsplit[1]+"\r\n");
+						}else if(MsgType.equals("MyColor")) {
+							otherBW.write("MSGTYPE:SendHisColor#"+MsgData+"\r\n");
 							otherBW.flush();
 							//退出房间
-						}else if(msgsplit[0].equals("MSGTYPE:LingoutGameNowPerson")) {
+						}else if(MsgType.equals("LingoutGameNowPerson")) {
 							writer.write("MSGTYPE:STOPREAD!\r\n");
 							writer.flush();
-							//如果当前局有人的话就通知他自己下线了！！，没有的话就不通知了，直接删除服务器对象自己创建的房间
-							if(msgsplit[1].equals("1")) {
+							//如果当前局有人的话就通知对方自己下线了！！，没有的话就不通知了，直接删除服务器对象自己创建的房间
+							if(MsgData.toString().equals("1")) {
 								//这个方法比DeleteLingoutPlayer方法多个发送自己下线了
 								IOEX();
 							}else {
 								DeleteLingoutPlayer();
 							}
 							//游戏开始
-						}else if (msgsplit[0].equals("MSGTYPE:GAMEBEGIN")) {
+						}else if (MsgType.equals("GAMEBEGIN")) {
 							otherBW.write("MSGTYPE:GAMEBEGIN\r\n");
 							otherBW.flush();
 							//游戏准备
-						}else if (msgsplit[0].equals("MSGTYPE:GAMEREADY")) {
+						}else if (MsgType.equals("GAMEREADY")) {
 							otherBW.write(msg+"\r\n");
 							otherBW.flush();
 							//游戏聊天
-						}else if (msgsplit[0].equals("MSGTYPE:GAMECHAT")) {
-							if(otherBW!=null) {
-								otherBW.write(msg+"\r\n");
-								otherBW.flush();
+						}else if (MsgType.equals("GAMECHAT")) {
+							try {
+								if(otherBW!=null) {
+									otherBW.write(msg+"\r\n");
+									otherBW.flush();
+									
+								}
+							} catch (IOException e2) {
+								otherBW.close();
+								otherBW = null;
+								otherSocket = null;
+								System.err.println("获取到otherBW已经失效，现在关闭它");
 							}
+							
 							//强行退出游戏
-						}else if(msgsplit[0].equals("MSGTYPE:BreakGame")) {
+						}else if(MsgType.equals("BreakGame")) {
 							otherBW.write(msg+"\r\n");
 							otherBW.flush();
 						}
@@ -215,10 +239,10 @@ public class ConnectTomsg implements Runnable{
 				try {
 					if(otherBW!=null) {
 						otherBW.close();
+						otherBW = null;
 					}
 					if(otherSocket!=null) {
 						otherSocket.close();
-					}else {
 						otherSocket = null;
 					}
 					
@@ -235,16 +259,16 @@ public class ConnectTomsg implements Runnable{
 		System.err.println("服务端一条循环线程终止");
 	}
 	private void SendChessBoardlist() throws IOException {
-		System.out.println("获取棋盘列表");
+		System.out.println("获取棋盘列表如下：");
 		String name ="";
 		for(Map.Entry<String, String> entry:Server.gameRoom.getChessBoards().entrySet()) {
 			
 			String play1 = entry.getKey();
 			String play2 = entry.getValue();
-			name +=(play1+","+play2+"#");
+			name +=(play1+","+play2+"&");
 		}
-		System.out.println("name:"+name);
-		writer.write(name+"\r\n");
+		System.out.println("Room:"+name);
+		writer.write("MSGTYPE:OnlineGameRooms#"+name+"\r\n");
 		writer.flush();
 	}
 	public void DeleteLingoutPlayer(){
@@ -287,8 +311,9 @@ public class ConnectTomsg implements Runnable{
 				if(otherSocket!=null&&otherSocket.isConnected()==true&&otherBW!=null) {
 					otherBW.write("MSGTYPE:GamePlayerLingout\r\n");
 					otherBW.flush();
-					
-				
+					//不能关otherBW缓冲，那么置NULL
+					otherBW =null;
+					otherSocket = null;
 					
 				}
 				
