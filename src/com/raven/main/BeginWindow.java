@@ -50,7 +50,7 @@ public class BeginWindow extends JFrame{
 
 	public static boolean bofang;
 	//自己的名字
-	static String username;
+	static String username = null;
 	static public Socket socket = null;
 	MyPlane myplane;
 	public BeginWindow(){
@@ -100,7 +100,7 @@ class MyPlane extends JPanel implements MouseListener{
 	int modelint = 0;
 	Timer timer;
 	static String serverIp = "127.0.0.1";
-	String username ;
+	
 	public MyPlane() {
 	
 	}
@@ -219,18 +219,24 @@ class MyPlane extends JPanel implements MouseListener{
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			//System.out.println("人机窗口！！");
 			//隐藏该窗口 创建人机窗口
-			if(username==null)
-				username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
-			if(username!=null) {
-				if(username.equals("")) {
-					JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
+			if(beginWindow.username==null) {
+				beginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+				if(beginWindow.username==null) {
 					return;
 				}
-				ComputerGame computerGame= new ComputerGame(beginWindow, username.trim());
-				beginWindow.setVisible(false);
-				
-				repaint();
 			}
+				
+			
+			if(beginWindow.username.equals("")) {
+				beginWindow.username =null;
+				JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
+				return;
+			}
+			ComputerGame computerGame= new ComputerGame(beginWindow, beginWindow.username.trim());
+			beginWindow.setVisible(false);
+			
+			repaint();
+			
 			
 		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=360&&p.getY()<=420&&modelint==0) {
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
@@ -301,7 +307,8 @@ class MyPlane extends JPanel implements MouseListener{
 			JOptionPane.showMessageDialog(this, "服务器连接失败！请检查地址是否正确");
 			return;
 		}
-		String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+		if(beginWindow.username==null) {
+			String username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
 			if(username==null||username.equals("")) {
 				return;
 			}
@@ -312,6 +319,8 @@ class MyPlane extends JPanel implements MouseListener{
 			}
 		
 			BeginWindow.username =username.trim();
+		}
+		
 		
 			
 			try {
@@ -332,7 +341,7 @@ class MyPlane extends JPanel implements MouseListener{
 				}else {
 					JOptionPane.showMessageDialog(this, "Raven的服务器连接失败了，请开启本地Server吧~");
 				}
-				System.out.println("欢迎"+username+"加入游戏厅");
+				System.out.println("欢迎"+beginWindow.username+"加入游戏厅");
 			} catch (HeadlessException e) {
 				JOptionPane.showMessageDialog(this, e.getMessage());
 				//e.printStackTrace();
