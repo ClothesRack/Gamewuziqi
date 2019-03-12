@@ -62,11 +62,6 @@ public class BeginWindow extends JFrame{
 		setLayout(null);
 		GameRoomUtil.CenterWindow(this);
 		setVisible(true);
-		
-		
-	
-		
-		
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
@@ -212,51 +207,61 @@ class MyPlane extends JPanel implements MouseListener{
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if(p.getX()>=120&&p.getX()<=300&&p.getY()>=160&&p.getY()<=220&&modelint==0) {
+		if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=160&&p.getY()<=220&&modelint==0) {
+			//在线游戏
+			OnlinePlaygame();
 			
-			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-			playGame();
-			
-		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=260&&p.getY()<=320&&modelint==0) {
-			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
-			//System.out.println("人机窗口！！");
-			//隐藏该窗口 创建人机窗口
-			if(BeginWindow.username==null) {
-				BeginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
-				if(BeginWindow.username==null) {
-					return;
-				}
-			}
-				
-			
-			if(BeginWindow.username.equals("")) {
-				BeginWindow.username =null;
-				JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
-				return;
-			}
-			new ComputerGame(beginWindow, BeginWindow.username.trim());
-			beginWindow.setVisible(false);
-			
-			repaint();
+		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=260&&p.getY()<=360-40&&modelint==0) {
+			ToComputerPlayGame();
 			
 			
-		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=360&&p.getY()<=420&&modelint==0) {
+		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=360&&p.getY()<=460-40&&modelint==0) {
+			//进入 游戏说明
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			modelint=1;
 			repaint();
-		}else if(p.getX()>=120&&p.getX()<=300&&p.getY()>=460&&p.getY()<=520&&modelint==0) {
+		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=460&&p.getY()<=560-40&&modelint==0) {
+			// 进入关于作者
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			modelint=2;
 			repaint();
 			//  y坐标注意要减字体大小的像素
-			//点击 返回上一界面
-		}else if (p.getX()>=150-30&&p.getX()<=400-30&&p.getY()>=500-40&&p.getY()<=550-40&&(modelint==1||modelint==2)) {
-			modelint=0;
 			
+		}else if (p.getX()>=150-30&&p.getX()<=400-30&&p.getY()>=500-40&&p.getY()<=550-40&&(modelint==1||modelint==2)) {
+			//点击 返回上一界面
+			modelint=0;
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			repaint();
 		}
-		//System.out.println("点击一次");
+		
+	}
+
+	public void ToComputerPlayGame() {
+		GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+		//System.out.println("人机窗口！！");
+		//隐藏该窗口 创建人机窗口
+		if(BeginWindow.username==null) {
+			BeginWindow.username = JOptionPane.showInputDialog("给您起一个个性的名称吧~");
+			if(BeginWindow.username==null) {
+				return;
+			}
+		}
+			
+		
+		if(BeginWindow.username.equals("")) {
+			BeginWindow.username =null;
+			JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
+			return;
+		}
+		new ComputerGame(beginWindow, BeginWindow.username.trim());
+		beginWindow.setVisible(false);
+		
+		repaint();
+	}
+
+	public void OnlinePlaygame() {
+		GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+		playGame();
 	}
 
 

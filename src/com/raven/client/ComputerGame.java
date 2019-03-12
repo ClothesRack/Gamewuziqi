@@ -40,12 +40,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-
 import com.raven.main.BeginWindow;
-
-import com.raven.main.PaintMoveChess;
 import com.raven.main.Room;
-
 import util.GameRoomUtil;
 
 
@@ -380,12 +376,14 @@ class xiaqiThread extends Thread{
 		}
 		
 	}
-
+	//人机 ai 未完善
 	private void prevent(GamePlane gamePlane) {
 		int allChess[][] = gamePlane.allChess;
 		int myColorINT = gamePlane.MyChessColorINT;
+		//遍历棋盘
 		for (int i = 0; i < allChess.length; i++) {
 			for (int j = 0; j < allChess[i].length; j++) {
+				//如果棋子颜色与玩家的颜色相同
 				if(allChess[i][j]==gamePlane.MyChessColorINT) {
 			
 				}
@@ -460,6 +458,7 @@ class GamePlane extends JSplitPane implements MouseListener{
 	ImageIcon women = new ImageIcon("source/women.jpg");
 	
 	URL classUrl = this.getClass().getResource("");  
+	//空的图片 即就是隐藏鼠标
 	Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
 	
 	public GamePlane(ComputerGame chessBoard,String gameplayer1) {
