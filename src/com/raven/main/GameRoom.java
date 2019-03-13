@@ -4,6 +4,7 @@ package com.raven.main;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,7 +19,7 @@ public class GameRoom implements Serializable{
 	public GameRoom() {
 	
 	}
-	Map<String,String> chessBoards = new TreeMap<String,String>();
+	Map<String,String> chessBoards = new LinkedHashMap <String,String>();
 	
 	public  Map<String, String> getChessBoards() {
 		return chessBoards;

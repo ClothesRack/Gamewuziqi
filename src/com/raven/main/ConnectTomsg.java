@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.Map;
 
 import com.raven.server.Server;
@@ -195,6 +196,7 @@ public class ConnectTomsg implements Runnable{
 						}else if(MsgType.equals("LingoutGameNowPerson")) {
 							writer.write("MSGTYPE:STOPREAD!\r\n");
 							writer.flush();
+							
 							//如果当前局有人的话就通知对方自己下线了！！，没有的话就不通知了，直接删除服务器对象自己创建的房间
 							if(MsgData.toString().equals("1")) {
 								//这个方法比DeleteLingoutPlayer方法多个发送自己下线了
@@ -202,6 +204,7 @@ public class ConnectTomsg implements Runnable{
 							}else {
 								DeleteLingoutPlayer();
 							}
+							
 							//游戏开始
 						}else if (MsgType.equals("GAMEBEGIN")) {
 							otherBW.write("MSGTYPE:GAMEBEGIN\r\n");
@@ -271,8 +274,41 @@ public class ConnectTomsg implements Runnable{
 		writer.write("MSGTYPE:OnlineGameRooms#"+name+"\r\n");
 		writer.flush();
 	}
-	public void DeleteLingoutPlayer(){
-		for(Map.Entry<String, String> entry:Server.gameRoom.chessBoards.entrySet()) {
+	public  void DeleteLingoutPlayer(){
+		Iterator<String> iterator = Server.gameRoom.chessBoards.keySet().iterator();
+		while (iterator.hasNext()) {
+			String k = (String) iterator.next();
+			String v = Server.gameRoom.chessBoards.get(k);
+			//说明自己是创建者
+			if(k.equals(myname)) {
+				//一定是先删除再添加 ，不然也会抛异常的！
+				iterator.remove();
+				
+				if(v!=null) {
+					
+					Server.gameRoom.chessBoards.put(v, null);
+				}
+				//删除了元素新增元素后一定要break;
+				//不加break 会Exception in thread "main" java.util.ConcurrentModificationException
+				//	 原因：添加元素会改变map的迭代器里面的属性值。所以不能获取下一个元素了，map已经改变了
+						/*
+						 *  if (modCount != expectedModCount)
+           						throw new ConcurrentModificationException();
+						 * */
+				break;
+			
+				
+			}
+			//说明自己是加入者
+			if(v!=null&&v.equals(myname)) {
+				Server.gameRoom.chessBoards.put(k, null);
+				
+			}
+		}
+		//Exception in thread "main" java.util.ConcurrentModificationException
+		
+		
+	/*	for(Map.Entry<String, String> entry:Server.gameRoom.chessBoards.entrySet()) {
 			String k = entry.getKey();
 			String v = entry.getValue();
 			//说明自己是创建者
@@ -292,7 +328,7 @@ public class ConnectTomsg implements Runnable{
 				Server.gameRoom.chessBoards.put(k, null);
 				
 			}
-		}
+		}*/
 		
 		System.out.println("新的棋盘列表");
 		Server.gameRoom.chessBoards.forEach((k,v)->{

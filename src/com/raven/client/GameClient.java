@@ -46,7 +46,10 @@ public class GameClient {
 			
 			UIManager.put("RootPane.setupButtonVisible", false);
 			org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
+			
 			beginWindow= new BeginWindow();
+			
+			
 		
 		} catch (Exception e) {
 			
