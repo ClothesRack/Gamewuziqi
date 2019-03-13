@@ -290,6 +290,7 @@ public class ConnectTomsg implements Runnable{
 				}
 				//删除了元素新增元素后一定要break;
 				//不加break 会Exception in thread "main" java.util.ConcurrentModificationException
+				//如果是 ConcurrentHashMap 类型 那么就不需要break
 				//	 原因：添加元素会改变map的迭代器里面的属性值。所以不能获取下一个元素了，map已经改变了
 						/*
 						 *  if (modCount != expectedModCount)
