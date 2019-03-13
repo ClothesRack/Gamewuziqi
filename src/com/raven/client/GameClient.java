@@ -14,7 +14,10 @@ import util.GameRoomUtil;
 
 public class GameClient {
 	public static BeginWindow beginWindow;
-	public static String MSG;
+	public static String MSG ="";
+	public static String onlineGameMSG;
+	public static String namerepeatMSG;
+	public static String roomFullOrRoomDistroyMSG;
 	public static void main(String[] args) {
 		/*
 		 * 

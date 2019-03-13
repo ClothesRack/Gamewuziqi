@@ -1,17 +1,14 @@
 package com.raven.main;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.raven.server.Server;
@@ -24,6 +21,7 @@ public class ConnectTomsg implements Runnable{
 	Socket otherSocket;
 	BufferedReader reader = null;
 	BufferedWriter writer = null;
+	public static List<BufferedWriter> playersBuff = new ArrayList<BufferedWriter>();
 	public ConnectTomsg(){
 	}
 	public  ConnectTomsg(Socket socket) {
@@ -34,6 +32,7 @@ public class ConnectTomsg implements Runnable{
 		/**
 		 * 消息体 组成 
 		 * 	MSGTYPE:消息类型#消息内容。
+		 *  	为了达到动态效果  创建房间 加入房间   退出房间 都需要给所有玩家发送房间状态
 		 */
 		
 		try {
@@ -41,6 +40,7 @@ public class ConnectTomsg implements Runnable{
 			reader = new BufferedReader(new InputStreamReader(socket
 					.getInputStream(),"UTF-8"));
 			writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(),"UTF-8"));
+			playersBuff.add(writer);
 		} catch (IOException e1) {
 			
 			e1.printStackTrace();
@@ -55,8 +55,10 @@ public class ConnectTomsg implements Runnable{
 				//如果收到消息是null，说明对方关闭了io流 那么这个线程退出
 				//如果消息类型头不是规定的 那么删掉这个socket连接 
 				if(msg==null||!msg.split(":")[0].equals("MSGTYPE")) {
-					Server.players.remove(socket);
+					GameRoom.players.remove(socket);
 					IOEX();
+					//删除自己
+					playersBuff.remove(writer);
 					break;
 				}
 				String MsgHeadType[] = msg.split(":");
@@ -68,19 +70,19 @@ public class ConnectTomsg implements Runnable{
 				if(msg.split("#").length==2) {
 					MsgData.append(msg.split("#")[1]);
 				}
-				if(!Server.players.containsKey(socket)) {
+				if(!GameRoom.players.containsKey(socket)) {
 					
 						
 						//新加入用户放入在线列表
 						if(MsgType.equals("username")) {
-							if(Server.players.containsValue(MsgData.toString())){//已经有该名字了 提醒玩家重新取名字
+							if(GameRoom.players.containsValue(MsgData.toString())){//已经有该名字了 提醒玩家重新取名字
 								writer.write("MSGTYPE:namerepeat#1\r\n");
 								writer.flush();
 								return;
 							}else {
 								writer.write("MSGTYPE:namerepeat#0\r\n");
 								writer.flush();
-								Server.players.put(socket, MsgData.toString());
+								GameRoom.players.put(socket, MsgData.toString());
 								myname = MsgData.toString();
 								System.out.println(MsgData+",登录了服务器");
 							}
@@ -94,14 +96,23 @@ public class ConnectTomsg implements Runnable{
 						//创建一个房间
 						if(MsgType.equals("CreateGameRoom")) {
 							Server.gameRoom.getChessBoards().put(MsgData.toString(), null);
+							playersBuff.forEach((buff)->{
+								try {
+									SendChessBoardlist(buff);
+								} catch (IOException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							});
+					
 
 						}
 						// 发送棋盘list
 						else if(MsgType.equals("GetOnlineGame")) {
-							SendChessBoardlist();
+							SendChessBoardlist(writer);
 						//加入者会给服务端发送他要加入房间创建者的姓名
 						}else if(MsgType.equals("AddGamePlayerName")) {
-							Server.players.forEach((k,v)->{
+							GameRoom.players.forEach((k,v)->{
 								if(v.equals(MsgData.toString())) {
 									//拿到创建房间玩家姓名
 									othername = v;
@@ -110,7 +121,7 @@ public class ConnectTomsg implements Runnable{
 											writer.write("MSGTYPE:RoomFullOrRoomDistroy#yes\r\n");
 											writer.flush();
 											//发送棋盘列表
-											SendChessBoardlist();
+											SendChessBoardlist(writer);
 											return;
 										} catch (IOException e) {
 											
@@ -143,7 +154,17 @@ public class ConnectTomsg implements Runnable{
 									} catch (IOException e1) {
 										
 										e1.printStackTrace();
-									}								
+									}	
+								
+							
+								}
+							});
+							playersBuff.forEach((buff)->{
+								try {
+									SendChessBoardlist(buff);
+								} catch (IOException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
 								}
 							});
 							
@@ -174,13 +195,14 @@ public class ConnectTomsg implements Runnable{
 							}
 							//创建者返回自己的名字回来，更新加入者线程的othereBW 对象 让加入者方便与其通信。
 						}else if(MsgType.equals("NoticeGameState")) {
-							Server.players.forEach((k,v)->{
-								if(v.equals(MsgData.toString().split(",")[0])) {
+							GameRoom.players.forEach((k,v)->{
+								String creatRoomPlays = MsgData.toString().split(",")[0];
+								if(v.equals(creatRoomPlays)) {
 									try {
 										otherBW = new BufferedWriter(new OutputStreamWriter(k.getOutputStream(),"UTF-8"));
 										othername = v;
 										otherSocket = k;
-										otherBW.write("MSGTYPE:ADDSucc#"+myname+",我很开心你能加进来\r\n");
+										otherBW.write("MSGTYPE:ADDSucc#"+myname+","+MsgData.toString().split(",")[1]+",我很开心你能加进来\r\n");
 										otherBW.flush();
 									} catch (IOException e) {
 										
@@ -188,14 +210,14 @@ public class ConnectTomsg implements Runnable{
 									}
 								}
 							});
+							
 							//拿到自己的颜色发送给加入者
 						}else if(MsgType.equals("MyColor")) {
 							otherBW.write("MSGTYPE:SendHisColor#"+MsgData+"\r\n");
 							otherBW.flush();
 							//退出房间
 						}else if(MsgType.equals("LingoutGameNowPerson")) {
-							writer.write("MSGTYPE:STOPREAD!\r\n");
-							writer.flush();
+							
 							
 							//如果当前局有人的话就通知对方自己下线了！！，没有的话就不通知了，直接删除服务器对象自己创建的房间
 							if(MsgData.toString().equals("1")) {
@@ -204,6 +226,14 @@ public class ConnectTomsg implements Runnable{
 							}else {
 								DeleteLingoutPlayer();
 							}
+							playersBuff.forEach((buff)->{
+								try {
+									SendChessBoardlist(buff);
+								} catch (IOException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							});
 							
 							//游戏开始
 						}else if (MsgType.equals("GAMEBEGIN")) {
@@ -228,10 +258,12 @@ public class ConnectTomsg implements Runnable{
 								System.err.println("获取到otherBW已经失效，现在关闭它");
 							}
 							
-							//强行退出游戏
+							//游戏中途退出游戏
 						}else if(MsgType.equals("BreakGame")) {
 							otherBW.write(msg+"\r\n");
 							otherBW.flush();
+							
+							
 						}
 					
 				}
@@ -255,13 +287,15 @@ public class ConnectTomsg implements Runnable{
 					e1.printStackTrace();
 				}
 				
-				e.printStackTrace();
+				//删除自己
+				playersBuff.remove(writer);
+			
 				break;
 			} 
 		}
 		System.err.println("服务端一条循环线程终止");
 	}
-	private void SendChessBoardlist() throws IOException {
+	private void SendChessBoardlist(BufferedWriter bWriter) throws IOException {
 		System.out.println("获取棋盘列表如下：");
 		String name ="";
 		for(Map.Entry<String, String> entry:Server.gameRoom.getChessBoards().entrySet()) {
@@ -271,8 +305,8 @@ public class ConnectTomsg implements Runnable{
 			name +=(play1+","+play2+"&");
 		}
 		System.out.println("Room:"+name);
-		writer.write("MSGTYPE:OnlineGameRooms#"+name+"\r\n");
-		writer.flush();
+		bWriter.write("MSGTYPE:OnlineGameRooms#"+name+"\r\n");
+		bWriter.flush();
 	}
 	public  void DeleteLingoutPlayer(){
 		Iterator<String> iterator = Server.gameRoom.chessBoards.keySet().iterator();
@@ -306,31 +340,7 @@ public class ConnectTomsg implements Runnable{
 				
 			}
 		}
-		//Exception in thread "main" java.util.ConcurrentModificationException
-		
-		
-	/*	for(Map.Entry<String, String> entry:Server.gameRoom.chessBoards.entrySet()) {
-			String k = entry.getKey();
-			String v = entry.getValue();
-			//说明自己是创建者
-			if(k.equals(myname)) {
-				
-				Server.gameRoom.chessBoards.remove(k);
-				if(v==null) {
-					
-					return;
-				}
-				Server.gameRoom.chessBoards.put(v, null);
-			
-				
-			}
-			//说明自己是加入者
-			if(v!=null&&v.equals(myname)) {
-				Server.gameRoom.chessBoards.put(k, null);
-				
-			}
-		}*/
-		
+	
 		System.out.println("新的棋盘列表");
 		Server.gameRoom.chessBoards.forEach((k,v)->{
 			System.out.println(k+","+v);
@@ -351,6 +361,8 @@ public class ConnectTomsg implements Runnable{
 					//不能关otherBW缓冲，那么置NULL
 					otherBW =null;
 					otherSocket = null;
+					
+					
 					
 				}
 				

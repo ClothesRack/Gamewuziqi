@@ -110,14 +110,14 @@ class MyPlane extends JPanel implements MouseListener{
 					
 					public void mouseMoved(MouseEvent e) {
 						p = e.getPoint();
-						//System.out.println("sss");
+						
 						if(modelint!=2)
 						repaint();
 					}
 					//按住鼠标移动才生效
 					public void mouseDragged(MouseEvent e) {
 						//System.out.println("鼠标按下不松拖动点的轨迹");
-						//System.out.println(e.getPoint());
+						
 					}
 				});
 				addMouseListener(this);
@@ -346,7 +346,7 @@ class MyPlane extends JPanel implements MouseListener{
 				}else {
 					JOptionPane.showMessageDialog(this, "Raven的服务器连接失败了，请开启本地Server吧~");
 				}
-				System.out.println("欢迎"+beginWindow.username+"加入游戏厅");
+				System.out.println("欢迎"+BeginWindow.username+"加入游戏厅");
 			} catch (HeadlessException e) {
 				JOptionPane.showMessageDialog(this, e.getMessage());
 				//e.printStackTrace();

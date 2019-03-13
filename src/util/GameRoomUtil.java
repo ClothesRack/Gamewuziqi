@@ -19,7 +19,10 @@ import com.raven.client.GameClient;
 import com.raven.main.BeginWindow;
 import com.raven.main.ChessBoard;
 import com.raven.main.GamePlane;
+import com.raven.main.MouseThing;
 import com.raven.main.Room;
+import com.raven.main.RoomPlane;
+
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 public class GameRoomUtil {
@@ -202,31 +205,43 @@ public class GameRoomUtil {
 				MsgData = MsgHeadType[1].split("#")[1];
 			}
 			
-			// 关闭此窗口一定要break此循环 ，要不然这个sb线程会读取了父窗口的刷新消息卡顿了。。找个半个小时。
-			if(!MsgHeadType[0].equals("MSGTYPE")||MsgType.equals("STOPREAD!")) {
+			
+			if(!MsgHeadType[0].equals("MSGTYPE")) {
 				
 				return -1;
 				// 
 				//通知创建房间的玩家xx加入游戏
 			}else if (MsgType.equals("namerepeat")||MsgType.equals("OnlineGameRooms")||MsgType.equals("RoomFullOrRoomDistroy")) {
+				
 				GameClient.MSG = MsgData;
-
+				Room.roomPlane.removeMouseListener(RoomPlane.mous);
+				Room.roomPlane.repaint();
+				//不要忘记这里的清空 不然鼠标监听器没效果
+				RoomPlane.hasplayer.clear();
+				
+				RoomPlane.mous = new MouseThing(Room.roomPlane);
+				Room.roomPlane.addMouseListener(RoomPlane.mous);
+				
+				
+				// 通知创建房间的玩家
 			}else if(MsgType.equals("ADDYourRoom")) {
 				
-				GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:NoticeGameState#"+MsgData.split(",")[1]+"\r\n");
+				GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:NoticeGameState#"+MsgData.split(",")[1]+","+GamePlane.MYWINLV+"\r\n");
 				ChessBoard.gamepanel.gameplayer2 = MsgData.split(",")[1];
-				ChessBoard.gamepanel.chessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n"+"   "+ChessBoard.gamepanel.gameplayer2+"加入了您的房间\n");
+				ChessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n"+"   "+ChessBoard.gamepanel.gameplayer2+"加入了您的房间\n");
 				//通知加入玩家 加入了谁的房间 获取 他的名字
 			}else if (MsgType.equals("ADDSucc")) {
-				ChessBoard.gamepanel.gameplayer2 = MsgData.toString().split(",")[0];
-				ChessBoard.gamepanel.chessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n"+"   你加入了"+ChessBoard.gamepanel.gameplayer2+"的房间\n");
+			
+				ChessBoard.gamepanel.gameplayer2 = MsgData.split(",")[0];
+				GamePlane.HisWINLV = Double.valueOf(MsgData.split(",")[1]);
+				ChessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n"+"   你加入了"+ChessBoard.gamepanel.gameplayer2+"的房间\n");
 			}else if(MsgType.equals("ChessGameing")) {
 				String cxy[] = MsgData.split(",");
 				if(cxy.length==3) {//长度为3的话，说明是下棋的信息
-					ChessBoard.gamepanel.rx = Integer.parseInt(cxy[1]);
-					ChessBoard.gamepanel.ry = Integer.parseInt(cxy[2]);
-					int x = ChessBoard.gamepanel.rx*45+430;
-					int y = ChessBoard.gamepanel.ry *45+110;
+					GamePlane.rx = Integer.parseInt(cxy[1]);
+					GamePlane.ry = Integer.parseInt(cxy[2]);
+					int x = GamePlane.rx*45+430;
+					int y = GamePlane.ry *45+110;
 					ChessBoard.gamepanel.chessPoint.add(cxy[0]+","+x+","+y);
 					//设置我的状态为可用
 					ChessBoard.gamepanel.isme = true;
@@ -241,21 +256,21 @@ public class GameRoomUtil {
 					if(cxy[0].equals("HeWON")||cxy[0].equals("YouWIN")||cxy[0].equals("heqi")) {
 						if(cxy[0].equals("HeWON")) {
 							JOptionPane.showMessageDialog(ChessBoard.gamepanel, "你输了！！！！");
-							ChessBoard.gamepanel.chessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n   你输了！！！！\n");
-							ChessBoard.gamepanel.HisplayGamewinnum++;
+							ChessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\r\n   你输了！！！！\n");
+							GamePlane.HisplayGamewinnum++;
 						}else if(cxy[0].equals("YouWIN")){
 							JOptionPane.showMessageDialog(ChessBoard.gamepanel, "对方认输了，你很棒哦");
-							ChessBoard.gamepanel.MyplayGamewinnum++;
+							GamePlane.MyplayGamewinnum++;
 							GameRoomUtil.palyothermusic("source/winmusic.mp3");
 						}else if (cxy[0].equals("heqi")) {
 							int i =JOptionPane.showConfirmDialog(ChessBoard.gamepanel, "对方请求和棋，你同意吗？","对方请求和棋",2);
 							if(i==0) {
-								GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:ChessGameing#heqi,0\r\n");
+								GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#heqi,0\r\n");
 				
-								ChessBoard.gamepanel.HisplayGamewinnum++;
-								ChessBoard.gamepanel.MyplayGamewinnum++;
+								GamePlane.HisplayGamewinnum++;
+								GamePlane.MyplayGamewinnum++;
 							}else {
-								GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:ChessGameing#heqi,1\r\n");
+								GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#heqi,1\r\n");
 								
 								return 0;
 							}
@@ -267,15 +282,15 @@ public class GameRoomUtil {
 						
 						int i =JOptionPane.showConfirmDialog(ChessBoard.gamepanel, "对方想要悔棋，你同意吗？","对方请求悔棋",2);
 						if(i==0) {
-							GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:ChessGameing#huiqi,0\r\n");
+							GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#huiqi,0\r\n");
 							//同意之后禁用自己的状态
 							ChessBoard.gamepanel.isme =false;
-							ChessBoard.gamepanel.allChess[ChessBoard.gamepanel.rx][ChessBoard.gamepanel.ry] =0;
+							ChessBoard.gamepanel.allChess[GamePlane.rx][GamePlane.ry] =0;
 							ChessBoard.gamepanel.chessPoint.remove(ChessBoard.gamepanel.chessPoint.size()-1);
 						
 						}else {
 							
-							GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:ChessGameing#huiqi,1\r\n");
+							GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#huiqi,1\r\n");
 						}
 						
 					}
@@ -283,7 +298,7 @@ public class GameRoomUtil {
 					if(cxy[0].equals("huiqi")) {
 						if(cxy[1].equals("0")) {
 							System.out.println("同意悔棋");
-							ChessBoard.gamepanel.allChess[ChessBoard.gamepanel.rx][ChessBoard.gamepanel.ry] =0;
+							ChessBoard.gamepanel.allChess[GamePlane.rx][GamePlane.ry] =0;
 							ChessBoard.gamepanel.chessPoint.remove(ChessBoard.gamepanel.chessPoint.size()-1);
 							ChessBoard.gamepanel.isme = true;
 						}else {
@@ -292,8 +307,8 @@ public class GameRoomUtil {
 					}else if (cxy[0].equals("heqi")) {
 						if(cxy[1].equals("0")) {
 							System.out.println("同意和棋");
-							ChessBoard.gamepanel.HisplayGamewinnum++;
-							ChessBoard.gamepanel.MyplayGamewinnum++;
+							GamePlane.HisplayGamewinnum++;
+							GamePlane.MyplayGamewinnum++;
 							//游戏完成所做的事
 							ChessBoard.gamepanel.GameWinAfter(ChessBoard.gamepanel);	
 
@@ -307,30 +322,30 @@ public class GameRoomUtil {
 
 				
 			}else if(MsgType.equals("youareblackoriswhite")) {
-				GameRoomUtil.SendToServerMsg(ChessBoard.gamepanel.chessBoard,"MSGTYPE:MyColor#"+ChessBoard.gamepanel.MyChessColor+"\r\n");
+				GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:MyColor#"+GamePlane.MyChessColor+"\r\n");
 				
 			}else if(MsgType.equals("SendHisColor")) {
 				System.out.println("房主的棋子颜色："+MsgData);
 					//设置我的颜色与防止的相反
 					if(MsgData.equals("white")) {
-						ChessBoard.gamepanel.MyChessColor = "black";
-						ChessBoard.gamepanel.MyChessColorINT = 2;
+						GamePlane.MyChessColor = "black";
+						GamePlane.MyChessColorINT = 2;
 						
 						
 						System.out.println("设置我的颜色为black");
 					}else {
-						ChessBoard.gamepanel.MyChessColor = "white";
-						ChessBoard.gamepanel.MyChessColorINT = 1;
+						GamePlane.MyChessColor = "white";
+						GamePlane.MyChessColorINT = 1;
 						
 						System.out.println("设置我的颜色为white");
 					}
 			}else if(MsgType.equals("GamePlayerLingout")){
-				if(!ChessBoard.gamepanel.chessBoard.RoomType.equals("CreateRoom")) {
-					//JOptionPane.showMessageDialog(gmPlane, "加入者下线");
+				if(!GamePlane.chessBoard.RoomType.equals("CreateRoom")) {
 					
-					ChessBoard.gamepanel.chessBoard.RoomType="CreateRoom";
+					GamePlane.HisWINLV  = 0;
+					GamePlane.chessBoard.RoomType="CreateRoom";
 				}
-				ChessBoard.gamepanel.chessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\n   "+ChessBoard.gamepanel.gameplayer2+"离开了房间\n");
+				ChessBoard.jt.append("系统："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\n   "+ChessBoard.gamepanel.gameplayer2+"离开了房间\n");
 				ChessBoard.gamepanel.gameplayer2 ="";
 				
 			}else if (MsgType.equals("GAMEBEGIN")) {
@@ -349,22 +364,22 @@ public class GameRoomUtil {
 					GameRoomUtil.palyothermusic("source/flowerdie.mp3");
 				}
 				GameRoomUtil.palyothermusic("source/chating.mp3");
-				ChessBoard.gamepanel.chessBoard.jt.append(ChessBoard.gamepanel.gameplayer2+"："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\n   "+MsgData.toString()+"\n");
+				ChessBoard.jt.append(ChessBoard.gamepanel.gameplayer2+"："+ChessBoard.gamepanel.dateFormat.format(new Date())+"\n   "+MsgData.toString()+"\n");
 				//设置总在最下方
-				ChessBoard.gamepanel.chessBoard.jt.setCaretPosition(ChessBoard.gamepanel.chessBoard.jt.getDocument().getLength());
+				ChessBoard.jt.setCaretPosition(ChessBoard.jt.getDocument().getLength());
 				
 			}else if(MsgType.equals("BreakGame")) {
 				JOptionPane.showMessageDialog(ChessBoard.gamepanel, "对方退出了房间，你赢的了这场比赛！");
-				ChessBoard.gamepanel.MyplayGamewinnum++;
+				GamePlane.MyplayGamewinnum++;
+				GamePlane.HisWINLV  = 0;
 				ChessBoard.gamepanel.GameWinAfter(ChessBoard.gamepanel);
 				GameRoomUtil.palyothermusic("source/winmusic.mp3");
 			}
 			if(ChessBoard.gamepanel!=null)
 			ChessBoard.gamepanel.repaint();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(ChessBoard.gamepanel, "您与服务器已经断开了连接");
-			ChessBoard.gamepanel.chessBoard.setVisible(false);
-			GameClient.beginWindow.setVisible(true);
+			
+			return -1;
 		}
 		return 0;
 		

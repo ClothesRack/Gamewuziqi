@@ -48,13 +48,13 @@ public class GamePlane extends JSplitPane implements MouseListener{
 	
 	int GameWidth = 1300;
 	int GameHeight = 1000;
-	public ChessBoard chessBoard;
+	public static ChessBoard chessBoard;
 	Boolean MouseAtChess =false;
 	Boolean mousedown = false;
 	boolean musicing = true;
 	//当前棋子的行列
-	public int rx ;
-	public int ry ;
+	public static int rx ;
+	public static int ry ;
 	//棋子的坐标
 	public List<String> chessPoint = new ArrayList<String>();
 	//下过棋子的坐标
@@ -71,18 +71,18 @@ public class GamePlane extends JSplitPane implements MouseListener{
 	ImageIcon man = new ImageIcon("source/man.jpg");
 	ImageIcon women = new ImageIcon("source/women.jpg");
 	
-	public String MyChessColor ="black";
+	public static String MyChessColor ="black";
 	/*String MyChessColor ="black";*/
 	//白1黑2
-	public int MyChessColorINT =2;
+	public static int MyChessColorINT =2;
 	BufferedImage Colorstaus;
 	//胜率
-	double MYWINLV = 0;
-	double HisWINLV = 0;
+	public static double MYWINLV = 0;
+	public static double HisWINLV = 0;
 	
 	public SimpleDateFormat dateFormat= new SimpleDateFormat("hh:mm:ss");
-	public int MyplayGamewinnum = 0;
-	public int HisplayGamewinnum = 0;
+	public static int MyplayGamewinnum = 0;
+	public static int HisplayGamewinnum = 0;
 	// 总场数
 	int PlayGamenum = 0;
 	public boolean zhunbei = false;
@@ -90,11 +90,10 @@ public class GamePlane extends JSplitPane implements MouseListener{
 	
 	URL classUrl = this.getClass().getResource("");  
 	Image imageCursor = Toolkit.getDefaultToolkit().getImage(classUrl);  
-	public GamePlane(ChessBoard chessBoard,String gameplayer1) {
+	public GamePlane() {
 		setLayout(null);
 		
-		this.gameplayer1 = gameplayer1;
-		this.chessBoard = chessBoard;
+		
 		//透明
 		//setOpaque(false); 
 		//不要忘记添加 这个事件
@@ -256,6 +255,17 @@ public class GamePlane extends JSplitPane implements MouseListener{
 		
 		g.drawImage(bf,0,0,this);
 	}
+	
+	
+
+	public void setGameplayer1(String gameplayer1) {
+		this.gameplayer1 = gameplayer1;
+	}
+
+	public void setChessBoard(ChessBoard chessBoard) {
+		GamePlane.chessBoard = chessBoard;
+	}
+
 	//鼠标按下
 	@Override
 	public void mousePressed(MouseEvent e) {
@@ -404,13 +414,13 @@ public class GamePlane extends JSplitPane implements MouseListener{
 				allChess[i][j]=0;
 			}
 		}
-		if(gamepanel.MyChessColor.equals("white")) {
-			gamepanel.MyChessColorINT = 2;
+		if(GamePlane.MyChessColor.equals("white")) {
+			GamePlane.MyChessColorINT = 2;
 			gamepanel.MyChessColor = "black";
 			
 		}else {
-			gamepanel.MyChessColorINT = 1;
-			gamepanel.MyChessColor = "white";
+			GamePlane.MyChessColorINT = 1;
+			GamePlane.MyChessColor = "white";
 			
 		}
 	}

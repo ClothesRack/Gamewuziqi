@@ -3,8 +3,6 @@ package com.raven.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import com.raven.main.ConnectTomsg;
@@ -12,7 +10,6 @@ import com.raven.main.GameRoom;
 
 public class Server implements Runnable{
 	static ServerSocket serverSocket;
-	public static Map<Socket,String> players = new LinkedHashMap<Socket,String>();
 	
 	static ExecutorService pool= Executors.newFixedThreadPool(50);
 	public static GameRoom gameRoom = new GameRoom();

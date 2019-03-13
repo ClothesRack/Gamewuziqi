@@ -55,9 +55,9 @@ public class ChessBoard extends JFrame {
 	
 	public String RoomType;
 	public Room parFrame;
-	public static GamePlane gamepanel;
+	public static GamePlane gamepanel =new GamePlane();
 	JSplitPane chatPlane;
-	public JTextArea jt  = new JTextArea();
+	public static JTextArea jt  = new JTextArea();
 	JScrollPane jscroll ;
 	
 	public ChessBoard() {
@@ -85,7 +85,8 @@ public class ChessBoard extends JFrame {
 				setResizable(false);
 				
 				
-				gamepanel = new GamePlane(this,username);
+				gamepanel.setChessBoard(this);
+				gamepanel.setGameplayer1(username);
 				
 				gamepanel.setLocation(0, 0);
 				gamepanel.setSize(ChessBoardWidth-500, ChessBoardHeight);
@@ -176,27 +177,21 @@ public class ChessBoard extends JFrame {
 				add(gamepanel);
 				add(chatPlane);
 
-				GetServerMSG(gamepanel);
+				
 				
 					
 				
 	}
+	public String getRoomType() {
+		return RoomType;
+	}
+	public void setRoomType(String roomType) {
+		RoomType = roomType;
+	}
 
 		
 
-	public void GetServerMSG(GamePlane gmplane){
-		new Thread() {
-			public void run() {
-				while (true) {
-					int status = GameRoomUtil.ResultMsg();
-					if(status==-1) {
-						break;
-					}
-				}
-				System.out.println("sb线程出来");
-			};
-		}.start();
-	}
+
 
 
 	
@@ -226,8 +221,8 @@ class WindowEvent implements WindowListener{
 	@Override
 	public void windowClosing(java.awt.event.WindowEvent e) {
 		System.out.println("退出");
-
-		if(chessBoard.gamepanel.kaishi) {
+		ChessBoard.jt.removeAll();
+		if(ChessBoard.gamepanel.kaishi) {
 			
 			int i = JOptionPane.showConfirmDialog(chessBoard, "当前游戏已经开始，退出游戏你将输掉比赛，确认退出游戏？","确认退出？",2);
 			if(i==0) {
@@ -241,17 +236,22 @@ class WindowEvent implements WindowListener{
 		
 		if(chessBoard.RoomType.equals("CreateRoom")||chessBoard.RoomType.equals("ADDRoom")) {
 			String msg = "";
-			if(chessBoard.gamepanel.gameplayer2.equals("")) {
+			if(ChessBoard.gamepanel.gameplayer2.equals("")) {
 				msg  = "MSGTYPE:LingoutGameNowPerson#0\r\n";
 			}else {
 				msg  = "MSGTYPE:LingoutGameNowPerson#1\r\n";
 			}
 			GameRoomUtil.SendToServerMsg(chessBoard,msg);
-			GameRoomUtil.SendToServerMsg(chessBoard.parFrame,"MSGTYPE:GetOnlineGame\r\n");
-			GameRoomUtil.ResultMsg();
 			chessBoard.parFrame.setVisible(true);
 			chessBoard.dispose();
 			GameRoomUtil.stopmusic();//停止播放音乐
+			ChessBoard.jt.setText("");
+			ChessBoard.gamepanel.gameplayer2 = "";
+			ChessBoard.gamepanel.zhunbei = false;
+			ChessBoard.gamepanel.kaishi = false;
+			ChessBoard.gamepanel.chessPoint.clear();
+			ChessBoard.gamepanel.HisWINLV =0;
+			ChessBoard.gamepanel.MYWINLV =0;
 		}
 
 	
@@ -283,20 +283,6 @@ class WindowEvent implements WindowListener{
 		
 	}
 }
-class getServerMsg{
-	GamePlane gmPlane;
-	
-	public getServerMsg() {
-		
-	}
-	public getServerMsg(GamePlane chessBord){
-		this.gmPlane = chessBord;
-	}
-
-	
-	
-	
-}
 
 class xiaqiThread extends Thread{
 	GamePlane gmplane;
@@ -317,58 +303,58 @@ class xiaqiThread extends Thread{
 					JOptionPane.showMessageDialog(gmplane, "游戏还未开始您不能落子");
 					return;
 				}
-				if(gmplane.chessPoint.size()==0&&gmplane.MyChessColorINT==1) {
+				if(gmplane.chessPoint.size()==0&&GamePlane.MyChessColorINT==1) {
 					JOptionPane.showMessageDialog(gmplane, "黑方先手~~");
 					return;
 					
 				}
 				double x = (p.getX()-430)/45;
 				double y = (p.getY()-110)/45;
-				gmplane.rx = (int)x;
-				gmplane.ry =(int)y;
+				GamePlane.rx = (int)x;
+				GamePlane.ry =(int)y;
 				String xstr = Double.toString(x);
 				String ystr = Double.toString(y);
 				char xd = xstr.charAt(xstr.indexOf(".")+1);
 				char yd = ystr.charAt(ystr.indexOf(".")+1);
 				if(xd-'0'>5) {
-					gmplane.rx += 1;
+					GamePlane.rx += 1;
 				}
 				if(yd-'0'>5) {
-					gmplane.ry +=1;
+					GamePlane.ry +=1;
 				}
 				//System.out.println(chessBoard.rx+"..."+chessBoard.ry);
 				//如果点在棋盘上
-				if(!(gmplane.rx>=0&&gmplane.rx<=14&&gmplane.ry>=0&&gmplane.ry<=14)) {
+				if(!(GamePlane.rx>=0&&GamePlane.rx<=14&&GamePlane.ry>=0&&GamePlane.ry<=14)) {
 					return;
 				}
-				if(gmplane.allChess[gmplane.rx][gmplane.ry] !=0) {
+				if(gmplane.allChess[GamePlane.rx][GamePlane.ry] !=0) {
 					System.out.println("一定落子了");
 					return;
 				}
 				// 白1黑2
-				if(gmplane.MyChessColor.equals("white")) {
-					gmplane.allChess[gmplane.rx][gmplane.ry] =1;
+				if(GamePlane.MyChessColor.equals("white")) {
+					gmplane.allChess[GamePlane.rx][GamePlane.ry] =1;
 				}else {
-					gmplane.allChess[gmplane.rx][gmplane.ry] =2;
+					gmplane.allChess[GamePlane.rx][GamePlane.ry] =2;
 				}
 				GameRoomUtil.palyothermusic("source/mousedown.mp3");
-				gmplane.chessPoint.add(gmplane.MyChessColor+","+(gmplane.rx*45+430)+","+(gmplane.ry*45+110));
+				gmplane.chessPoint.add(GamePlane.MyChessColor+","+(GamePlane.rx*45+430)+","+(GamePlane.ry*45+110));
 				gmplane.isme = false;
 				
 				
 		
-				System.out.println(gmplane.rx+"..."+gmplane.ry);
-				GameRoomUtil.SendToServerMsg(gmplane.chessBoard,"MSGTYPE:ChessGameing#"+gmplane.MyChessColor+","+gmplane.rx+","+gmplane.ry+"\r\n");
+				System.out.println(GamePlane.rx+"..."+GamePlane.ry);
+				GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#"+GamePlane.MyChessColor+","+GamePlane.rx+","+gmplane.ry+"\r\n");
 			
 				
 				//判断是否赢了比赛
 				boolean iswin = gmplane.checkwin();
 				if(iswin) {
 					System.out.println("你赢了啊！！！");
-					GameRoomUtil.SendToServerMsg(gmplane.chessBoard,"MSGTYPE:ChessGameing#GameWIN"+"\r\n");
+					GameRoomUtil.SendToServerMsg(GamePlane.chessBoard,"MSGTYPE:ChessGameing#GameWIN"+"\r\n");
 					JOptionPane.showMessageDialog(gmplane, "你赢得了比赛！！");
-					gmplane.chessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   你赢得了比赛！！\n");
-					gmplane.MyplayGamewinnum++;
+					ChessBoard.jt.append("系统："+gmplane.dateFormat.format(new Date())+"\n   你赢得了比赛！！\n");
+					GamePlane.MyplayGamewinnum++;
 					gmplane.GameWinAfter(gmplane);
 					GameRoomUtil.palyothermusic("source/winmusic.mp3");
 				}
