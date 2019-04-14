@@ -3,7 +3,13 @@ package com.raven.main;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-
+/**
+ * 
+ * @author Raven
+ * @date 下午5:57:23
+ * @version
+ * 	为了让动画效果能够更流程，该线程就是解决该问题的
+ */
 public class PaintMoveChess extends Thread{
 	BufferedImage bf;
 	Graphics g; 

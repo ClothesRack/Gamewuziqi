@@ -5,8 +5,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JOptionPane;
 
-import com.raven.client.GameClient;
-
+import client.GameClient;
 import util.GameRoomUtil;
 
 public class MouseThing extends MouseAdapter{

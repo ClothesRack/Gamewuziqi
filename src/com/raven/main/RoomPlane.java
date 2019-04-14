@@ -17,8 +17,7 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 
-import com.raven.client.GameClient;
-
+import client.GameClient;
 import util.GameRoomUtil;
 
 public class RoomPlane extends JPanel{

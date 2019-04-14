@@ -39,8 +39,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import com.raven.client.GameClient;
-
+import client.GameClient;
 import util.GameRoomUtil;
 
 

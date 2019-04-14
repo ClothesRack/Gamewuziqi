@@ -1,14 +1,11 @@
 package com.raven.main;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
@@ -17,7 +14,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -26,19 +22,23 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 
-import com.raven.client.ComputerGame;
-import com.raven.client.GameClient;
 
+import com.computer.ComputerGame;
+
+import client.GameClient;
 import util.GameRoomUtil;
-
+/**
+ * 
+ * @author Raven
+ * @date 下午5:54:11
+ * @version
+ *  	该类是一个窗口，供玩家选择功能
+ */
 public class BeginWindow extends JFrame{
 	/**
 	 * 
@@ -48,7 +48,7 @@ public class BeginWindow extends JFrame{
 
 	static public BufferedWriter out;
 	static public BufferedReader in;
-
+	// 判断当前是否播放音乐。
 	public static boolean bofang;
 	//自己的名字
 	static String username = null;
@@ -82,7 +82,12 @@ public class BeginWindow extends JFrame{
 	
 
 }
+// 窗口面板
 class MyPlane extends JPanel implements MouseListener{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	BeginWindow beginWindow;
 	int rectwidth = 180;
 	int rectheight = 60;
@@ -97,7 +102,6 @@ class MyPlane extends JPanel implements MouseListener{
 	int modelint = 0;
 	Timer timer;
 	static String serverIp = "127.0.0.1";
-	
 	public MyPlane() {
 	
 	}
@@ -107,7 +111,7 @@ class MyPlane extends JPanel implements MouseListener{
 		this.beginWindow = beginWindow;
 		//针对鼠标移动的接口  
 				this.addMouseMotionListener(new MouseMotionAdapter() {
-					
+					//鼠标移动触发器
 					public void mouseMoved(MouseEvent e) {
 						p = e.getPoint();
 						
@@ -129,6 +133,7 @@ class MyPlane extends JPanel implements MouseListener{
 		Graphics2D g2 = bi.createGraphics();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);  
 		g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,RenderingHints.VALUE_STROKE_DEFAULT); 
+		//如果是模式0 的话
 		if(modelint==0) {
 			g2.drawImage(bgImg.getImage(), 0, 0,  530, 700,bgImg.getImageObserver());
 			g2.setColor(Color.pink);
@@ -199,6 +204,22 @@ class MyPlane extends JPanel implements MouseListener{
 			
 			g2.drawString("返回上个界面", 150, 500);
 			GameRoomUtil.writeString(p, mousedown, "返回上个界面", g2, 150, 500, 250, 50);
+		}else if ( modelint == 3 ) {
+			g2.drawImage(bgImg.getImage(), 0, 0,  530, 700,bgImg.getImageObserver());
+			g2.setColor(Color.pink);
+			g2.setFont(beginFont);
+			g2.drawString("难度选择", 80, 110);
+			g2.setFont(gameFont);
+			
+			g2.drawString("一般难度", 150, 200);
+			g2.drawString("中级难度", 150, 300);
+			
+			GameRoomUtil.writeString(p,mousedown,"一般难度",g2,150, 200, rectwidth, rectheight);
+			GameRoomUtil.writeString(p,mousedown,"中级难度",g2,150, 300, rectwidth, rectheight);
+			g2.setColor(Color.pink);
+			g2.drawString("返回上个界面", 150, 500);
+			GameRoomUtil.writeString(p, mousedown, "返回上个界面", g2, 150, 500, 250, 50);
+			
 		}
 		g2.dispose();
 		g.drawImage(bi, 0, 0, this);
@@ -207,36 +228,51 @@ class MyPlane extends JPanel implements MouseListener{
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=160&&p.getY()<=220&&modelint==0) {
-			//在线游戏
-			OnlinePlaygame();
+		if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=160&&p.getY()<=220&&(modelint==0||modelint==3)) {
+			if(modelint==0) {
+				//在线游戏
+				OnlinePlaygame();
+			}else if (modelint==3) {
+				ToComputerPlayGame(1);
+				repaint();
+			}
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+		//人机界面	
+		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=260&&p.getY()<=360-40&&(modelint==0||modelint==3)) {
 			
-		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=260&&p.getY()<=360-40&&modelint==0) {
-			ToComputerPlayGame();
-			
+			if(modelint==0) {
+				modelint = 3;
+			}else if (modelint==3) {
+				ToComputerPlayGame(2);
+				repaint();
+			}
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			
 		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=360&&p.getY()<=460-40&&modelint==0) {
-			//进入 游戏说明
-			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+			
 			modelint=1;
 			repaint();
-		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=460&&p.getY()<=560-40&&modelint==0) {
-			// 进入关于作者
+			//进入 游戏说明
 			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
+		}else if(p.getX()>=120&&p.getX()<=330-30&&p.getY()>=460&&p.getY()<=560-40&&modelint==0) {
+			
 			modelint=2;
 			repaint();
+			// 进入关于作者
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			//  y坐标注意要减字体大小的像素
 			
-		}else if (p.getX()>=150-30&&p.getX()<=400-30&&p.getY()>=500-40&&p.getY()<=550-40&&(modelint==1||modelint==2)) {
+		}else if (p.getX()>=150-30&&p.getX()<=400-30&&p.getY()>=500-40&&p.getY()<=550-40&&(modelint==1||modelint==2||modelint==3)) {
 			//点击 返回上一界面
 			modelint=0;
-			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 			repaint();
+			GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 		}
+		
 		
 	}
 
-	public void ToComputerPlayGame() {
+	public void ToComputerPlayGame(int AlgLeave) {
 		GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 		//System.out.println("人机窗口！！");
 		//隐藏该窗口 创建人机窗口
@@ -253,7 +289,7 @@ class MyPlane extends JPanel implements MouseListener{
 			JOptionPane.showMessageDialog(beginWindow, "名字不能为空哦。");
 			return;
 		}
-		new ComputerGame(beginWindow, BeginWindow.username.trim());
+		new ComputerGame(beginWindow, BeginWindow.username.trim(),AlgLeave);
 		beginWindow.setVisible(false);
 		
 		repaint();
@@ -303,7 +339,7 @@ class MyPlane extends JPanel implements MouseListener{
 				System.out.println(ip.getHost());
 				BeginWindow.socket = new Socket(ip.getHost(), 12790);
 			}else {
-				serverIp  = JOptionPane.showInputDialog(this, "请输入服务器IP地址(默认为127.0.0.1)");
+				serverIp  = JOptionPane.showInputDialog(this, "请输入服务器IP地址(默认为本机->127.0.0.1)");
 				if(serverIp==null)return;
 				if(serverIp.equals("")) {
 					serverIp ="127.0.0.1";

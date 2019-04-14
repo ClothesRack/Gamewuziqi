@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.raven.server.Server;
+import server.Server;
 
 public class ConnectTomsg implements Runnable{
 	Socket socket;

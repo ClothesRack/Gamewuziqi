@@ -15,7 +15,6 @@ import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import com.raven.client.GameClient;
 import com.raven.main.BeginWindow;
 import com.raven.main.ChessBoard;
 import com.raven.main.GamePlane;
@@ -23,6 +22,7 @@ import com.raven.main.MouseThing;
 import com.raven.main.Room;
 import com.raven.main.RoomPlane;
 
+import client.GameClient;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 public class GameRoomUtil {
