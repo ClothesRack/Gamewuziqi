@@ -35,9 +35,10 @@ import util.GameRoomUtil;
 /**
  * 
  * @author Raven
- * @date 下午5:54:11
+ * @date 上午2:35:09
+ * @ClassName: BeginWindow
+ * @description: 该类的作用是创建一个游戏的开始界面
  * @version
- *  	该类是一个窗口，供玩家选择功能
  */
 public class BeginWindow extends JFrame{
 	/**
@@ -82,7 +83,14 @@ public class BeginWindow extends JFrame{
 	
 
 }
-// 窗口面板
+/**
+ * 
+ * @author Raven
+ * @date 上午2:35:54
+ * @ClassName: MyPlane
+ * @description: 把主要内容都显示在Panel上。
+ * @version
+ */
 class MyPlane extends JPanel implements MouseListener{
 	/**
 	 * 
@@ -271,7 +279,14 @@ class MyPlane extends JPanel implements MouseListener{
 		
 		
 	}
-
+	/**
+	 * 
+	* @Title: ToComputerPlayGame   
+	* @Description: TODO   
+	* @param @param AlgLeave 难度等级   
+	* @return void    
+	* @throws 无
+	 */
 	public void ToComputerPlayGame(int AlgLeave) {
 		GameRoomUtil.playChessMovemusic("source/mousedown.mp3");
 		//System.out.println("人机窗口！！");

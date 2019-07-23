@@ -12,7 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 import server.Server;
-
+/**
+ * 
+ * @author Raven
+ * @date 上午2:38:14
+ * @ClassName: ConnectTomsg
+ * @description: 服务器后台线程处理任务
+ * @version
+ */
 public class ConnectTomsg implements Runnable{
 	Socket socket;
 	String myname;
